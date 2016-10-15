@@ -160,6 +160,10 @@ ds.GetBlockSize()
 ~~~
 {: .python}
 
+## Basic visualization
+
+Use matplotlib for some basic image previews.
+
 ### Other libraries that make use of GDAL:
 
 Show some examples of what might be different about these libraries.
