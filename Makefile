@@ -88,7 +88,7 @@ lesson-check :
 	@bin/lesson_check.py -s . -p ${PARSER}
 
 unittest :
-	python bin/test_lesson_check.py
+	python3 bin/test_lesson_check.py
 
 ## lesson-files   : show expected names of generated files for debugging.
 lesson-files :
