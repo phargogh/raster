@@ -3,14 +3,17 @@ title: "Using GDAL"
 teaching: 30
 exercises: 15
 questions:
-- "What functionality does xarray offer?"
-- "When should I use xarray?"
+- "What functionality does GDAL offer?"
+- "What raster dataset formats are supported?"
+- "How do I interact with raster data within a python program?"
 objectives:
-- "selection and subsetting of array datasets using labeled indexing"
-- "grouping data and applying statistical functions across multiple dimensions"
-- "visualizing 1 and 2 dimensional slices of array data"
+- "Understand the basic components of a raster dataset"
+- "Read from and write to raster datasets"
+- "Perform numpy operations on a raster's values"
 keypoints:
-- xarray 
+- "GDAL is useful for reading/writing/transforming raster datasets"
+- "Errors can be handled pythonically"
+- "Pixel values can be extracted to a numpy array"
 ---
 
 ### What is GDAL (Geospatial Data Abstraction Library)?
@@ -105,19 +108,8 @@ ds = gdal.Open('<rootDir>/raster.tif')
 > may be why.
 >
 > #### Pythonic Error Handling
-> GDAL uses a stack to allow configuration of its error handling.  This allows us to
-> push an error handler when needed, and pop it when we're finished.
->
 > ~~~
-> def _gdal_error_handler(*args):
->    """Raise an exception when a GDAL exception occurs."""
->    raise ValueError(*args)
-> 
-> gdal.PushErrorHandler(_gdal_error_handler)
-> # Do something that requires this exception
->
-> # Pop the handler from the stack when we're finished.
-> gdal.PopErrorHandler()
+> gdal.UseExceptions()
 > ~~~
 > {: .python}
 {: .callout}
@@ -133,10 +125,6 @@ Since rasters can be very, very large, GDAL will not read its contents into memo
 help(ds)
 ~~~
 {: .python}
-
-## Dataset Properties
-
-Xarray datasets have a number of [properties](http://xarray.pydata.org/en/stable/data-structures.html#dataarray) that you can view at any time:
 
 ### Dimensions
 

@@ -1,7 +1,7 @@
 ---
 title: "Efficient raster computation with PyGeoProcessing"
-teaching: 45
-exercises: 15
+teaching: 20 
+exercises: 15 
 questions:
 - "What problems can PyGeoProcessing help me solve?"
 - "When should I use PyGeoProcessing?"
@@ -44,6 +44,7 @@ Common use cases include:
 * You have limited memory or are in a 32-bit environment
 * You need fast geoprocessing routines
 * You don't have access to optimized GIS routines
+* You need an easy way to perform operations on partially-overlapping raster data
 
 ### Why not just use GIS software?
 * GIS usually requires a large installation with many dependencies
@@ -60,6 +61,8 @@ Maybe calculate erosivity or something?
 Work through a gaussian filter example
 
 ### iterblocks
+
+#### Note on execution speed
 
 Compare iterblocks speed vs. reading a whole array into memory.
 
