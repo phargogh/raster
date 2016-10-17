@@ -148,6 +148,116 @@ ds.GetBlockSize()
 ~~~
 {: .python}
 
+## Reading Raster Values
+
+Several GDAL objects have ``ReadAsArray()`` methods:
+
+* ``gdal.Dataset``
+* ``gdal.Band``
+* ``gdal.RasterAttributeTable``
+
+~~~
+array = ds.ReadAsArray()
+~~~
+{: .python}
+
+To only read a specific band:
+
+~~~
+ds = gdal.Open('path/to/raster.tif')
+band = ds.GetRasterBand(1)
+array = band.ReadAsArray()
+~~~
+{: .python}
+
+## Copying Raster Datasets
+
+### Copying files without GDAL:
+
+~~~
+import os
+os.copyfile(
+    '/path/to/raster.tif',
+    '/path/to/newraster.tif')
+~~~
+{: .python}
+
+Or if your raster is a whole folder (as with ESRI Binary Grids):
+
+~~~
+import shutil
+shutil.copytree(
+    '/path/to/rasterdir',
+    '/path/to/newrasterdir')
+~~~
+{: .python}
+
+### Copying files with GDAL
+
+~~~
+from osgeo import gdal
+driver = gdal.GetDriverByName('GTiff')
+new_ds = driver.CreateCopy('/path/to/new_raster.tif', ds)
+new_ds = None
+~~~
+{: .python}
+
+### Creating new files with GDAL
+
+~~~
+from osgeo import gdal
+driver = gdal.GetDriverByName('GTiff')
+new_ds = driver.Create(
+    'path/to/new_raster.tif',
+    400,  # xsize
+    600,  # ysize
+    1,    # number of bands
+    gdal.GDT_Float32,  # The datatype of the pixel values
+    options=[  # Format-specific creation options.
+        'TILED=YES',
+        'BIGTIFF=IF_SAFER',
+        'BLOCKXSIZE=256',  # must be a power of 2
+        'BLOCKYSIZE=256'   # also power of 2, need not match BLOCKXSIZE
+    ])
+
+# fill the new raster with nodata values
+new_ds.SetNoDataValue(-1)
+new_ds.fill(-1)
+
+# When all references to new_ds are unset, the dataset is closed and flushed to disk
+new_ds = None
+~~~
+{: .python}
+
+## Writing to a raster
+
+Unlike reading to an array, writing only happens at the band level.
+
+~~~
+writeable_ds = gdal.Open('/path/to/raster.tif', gdal.GA_Update)
+band = writeable_ds.GetRasterBand(1)
+
+array = band.ReadAsArray()
+array += 1
+band.WriteArray(array)
+
+band = None
+ds = None
+~~~
+{: .python}
+
+> ## A note about python's memory model
+>
+> GDAL's python bindings interact with low-level C++ libraries, where memory is managed very
+> explicitly.  Python uses a system of reference counting to determine when python objects
+> should be cleaned up and their memory freed.  This can sometimes lead to situations where
+> GDAL expects certain objects to exist in memory, but Python has cleaned them up already.
+> When this happens, the OS detects that GDAL is reaching into memory it's not supposed to
+> access (which could be a security hazard), and kills the application via a Segmentation
+> Fault.
+{: .callout}
+
+
 ## Basic visualization
 
 Use matplotlib for some basic image previews.
@@ -159,4 +269,3 @@ Show some examples of what might be different about these libraries.
 * rasterio
 * PostGIS
 * GeoDjango (via postGIS)
-
