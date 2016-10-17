@@ -3,14 +3,15 @@ title: "Efficient raster computation with PyGeoProcessing"
 teaching: 45
 exercises: 15
 questions:
-- "What functionality does xarray offer?"
-- "When should I use xarray?"
+- "What problems can PyGeoProcessing help me solve?"
+- "When should I use PyGeoProcessing?"
 objectives:
-- "selection and subsetting of array datasets using labeled indexing"
-- "grouping data and applying statistical functions across multiple dimensions"
-- "visualizing 1 and 2 dimensional slices of array data"
+- "Understand how to execute local (pixel stack) operations"
+- "Understand how to execute focal (convolution) operations"
+- "Understand how to route a landscape"
 keypoints:
-- xarray 
+- "PyGeoProcessing provides programmable operations for efficient raster computations"
+- "Looping in python is computationally expensive"
 ---
 
 ### What is PyGeoProcessing?
@@ -37,15 +38,17 @@ keypoints:
 
 ### When to use PyGeoProcessing:
 
-* Your data is large but not big (your data can fit on a single computer)
-* You have limited memory or are in a 32-bit environment
-* You have a sequence of common geoprocessing steps to automate
+Common use cases include:
 
+* Your data is accessible on a single computer ("large but not big")
+* You have limited memory or are in a 32-bit environment
+* You need fast geoprocessing routines
+* You don't have access to optimized GIS routines
 
 ### Why not just use GIS software?
-* GIS usually requires a large installation
+* GIS usually requires a large installation with many dependencies
 * Some GIS software is proprietary
-
+* GIS doesn't always provide a pure-python interface
 
 ### Local Operations
 
@@ -62,5 +65,6 @@ Compare iterblocks speed vs. reading a whole array into memory.
 
 ### Routing
 
+Delineate a watershed?
 
 
