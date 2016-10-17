@@ -8,10 +8,10 @@ questions:
 objectives:
 - "Understand how to execute local (pixel stack) operations"
 - "Understand how to execute focal (convolution) operations"
-- "Understand how to route a landscape"
+- "Understand how to route a DEM"
 keypoints:
 - "PyGeoProcessing provides programmable operations for efficient raster computations"
-- "Looping in python is computationally expensive"
+- "Looping in python is slow; improve speed by iterating over blocks"
 ---
 
 ### What is PyGeoProcessing?
@@ -51,22 +51,36 @@ Common use cases include:
 * Some GIS software is proprietary
 * GIS doesn't always provide a pure-python interface
 
-### Local Operations
+>## ``pygeoprocessing >= 0.3.0a22`` required!
+> PyGeoProcessing is under active development, and fixes are released
+> with regularity.  Be sure you have the latest changes!
+> 
+> ~~~
+> >>> import pygeoprocessing
+> >>> pygeoprocessing.__version__
+> 0.3.0a22
+> ~~~
+> {: .python}
+{: .callout}
+
+### Local Operations: ``pygeoprocessing.raster_local_op``
 
 Work through a multi-raster vectorize_datasets example
 Maybe calculate erosivity or something?
 
-### Focal Operations
+### Focal Operations:  ``pygeoprocessing.raster_focal_op``
+
+### Zonal Statistics: ``pygeoprocessing.aggregate_values``
 
 Work through a gaussian filter example
 
-### iterblocks
+### Block iteration: ``pygeoprocessing.iterblocks``
 
 #### Note on execution speed
 
 Compare iterblocks speed vs. reading a whole array into memory.
 
-### Routing
+### Routing: ``pygeoprocessing.routing``
 
 Delineate a watershed?
 
