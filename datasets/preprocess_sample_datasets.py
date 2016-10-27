@@ -99,49 +99,24 @@ def prepare_landcover(lulc_path, clip_to_vector, out_lulc_path):
     boundingbox_vector = os.path.join(tempdir, 'sierra_bbox.shp')
     convert_vector_extents_to_vector(clip_to_vector, boundingbox_vector)
 
+    lulc_srs = pygeoprocessing.get_dataset_projection_wkt_uri(lulc_path)
+
     # reproject the vector to the target projection
-    print 'Reprojecting %s' % boundingbox_vector
+    print 'Reprojecting %s to LULC SRS' % boundingbox_vector
     projected_vector = os.path.join(tempdir, 'sierra_bbox_projected.shp')
-    pygeoprocessing.reproject_datasource_uri(boundingbox_vector, WGS84UTM11N,
+    pygeoprocessing.reproject_datasource_uri(boundingbox_vector, lulc_srs,
                                              projected_vector)
 
-    extents_file = os.path.join(tempdir, 'sierra_extents.tif')
-    print 'Creating raster from sierra bbox vector at %s' % extents_file
-    pygeoprocessing.create_raster_from_vector_extents_uri(
-        projected_vector,
-        pixel_size=50.0,
-        gdal_format=gdal.GDT_Byte,
-        nodata_out_value=255.0,
-        output_uri=extents_file)
-
-    # The extents file is filled with nodata, which causes some operations to
-    # crash when trying to calculate raster statistics.
-    sierra_ds = gdal.Open(extents_file, gdal.GA_Update)
-    sierra_band = sierra_ds.GetRasterBand(1)
-    sierra_band.Fill(0)
-    sierra_band.FlushCache()
-    sierra_band = None
-    sierra_ds.FlushCache()
-    sierra_ds = None
-
-    reprojected_lulc = os.path.join(tempdir, 'lulc_reprojected.tif')
-    reproject_raster_to_epsg3718(
-        lulc_path, reprojected_lulc,
-        pygeoprocessing.get_cell_size_from_uri(lulc_path))
-
-    # Clip the input LULC by clip_to
-    print 'Clipping LULC %s -> %s' % (reprojected_lulc, extents_file)
     clipped_lulc = os.path.join(tempdir, 'lulc_clipped.tif')
-    pygeoprocessing.vectorize_datasets(
-        [reprojected_lulc, extents_file],
-        dataset_pixel_op=lambda x, y: y,
-        dataset_out_uri=clipped_lulc,
-        datatype_out=pygeoprocessing.get_datatype_from_uri(reprojected_lulc),
-        nodata_out=pygeoprocessing.get_nodata_from_uri(reprojected_lulc),
-        pixel_size_out=pygeoprocessing.get_cell_size_from_uri(reprojected_lulc),
-        bounding_box_mode='intersection',
-        assert_datasets_projected=False
-    )
+    print 'Clipping the LULC %s by %s -> %s' % (lulc_path,
+                                                projected_vector,
+                                                clipped_lulc)
+    pygeoprocessing.clip_dataset_uri(
+        lulc_path, projected_vector, clipped_lulc,
+        assert_projections=False)  # Datasets are unprojected, so don't check
+
+    reproject_raster_to_epsg3718(
+        clipped_lulc, out_lulc_path, 500.0)  # 500m pixel size
 
 
 if __name__ == '__main__':
