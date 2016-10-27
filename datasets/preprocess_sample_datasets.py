@@ -125,10 +125,17 @@ if __name__ == '__main__':
         os.makedirs(output_dir)
 
     # reproject yosemite vector
+    # Yosemite vector is an excerpt from the National Park Service.
+    # Full citation:
+    # 2016. Administrative Boundaries of National Park System
+    # Units 9/30/2016 - National Geospatial Data Asset (NGDA) NPS National
+    # Parks Dataset. NPS - Land Resources Division
     pygeoprocessing.reproject_datasource_uri('yosemite.shp', WGS84UTM11N,
                                              os.path.join(output_dir, 'yosemite.shp'))
 
     # reproject DEMs
+    # DEMs are stored in this folder, and unzipped in-place.
+    # ASTER GDEM is a product of METI and NASA.
     for aster_name in ['ASTGTM2_N38W120', 'ASTGTM2_N37W120']:
         raster_filename = os.path.join(aster_name, '%s_dem.tif' % aster_name)
         ds = gdal.Open(raster_filename, gdal.GA_Update)
@@ -142,7 +149,16 @@ if __name__ == '__main__':
                                   '%s.tif' % aster_name.split('_')[1])
         reproject_raster_to_epsg3718(raster_filename, out_raster, 30)
 
-    # prepare LULC
+    # This is a vector of the south sierra region of california.
+    # Retrieved from http://www.fs.usda.gov/detail/r5/landmanagement/resourcemanagement/?cid=stelprdb5347192
     south_sierra_vector = 'ExistingVegSouthSierra2000_2008_v1.gdb'
+
+    # prepare LULC
+    # LULC is based on MODIS data, and can be downloaded from
+    # http://landcover.usgs.gov/global_climatology.php
+    # Full citation:
+    # Broxton, P.D., Zeng, X., Sulla-Menashe, D., Troch, P.A., 2014a: A
+    # Global Land Cover Climatology Using MODIS Data. J. Appl. Meteor.
+    # Climatol., 53, 1593 1605. doi:http://dx.doi.org/10.1175/JAMC-D-13-0270.1
     prepare_landcover('LCType.tif', south_sierra_vector,
                       os.path.join(output_dir, 'landcover.tif'))
