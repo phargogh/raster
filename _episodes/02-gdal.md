@@ -61,9 +61,9 @@ Supported Formats:
 
 GDAL is a C++ library, but you don't need to write your software in C++ to use it.
 
-Official bindings available for other languages:
-* Python (<a href="http://pypi.python.org/pypi/GDAL">PyPI</a>)
-* C#
+Official bindings [available for other languages](https://trac.osgeo.org/gdal/browser/trunk/gdal/swig?order=name):
+* Python [(PyPI page)](http://pypi.python.org/pypi/GDAL)
+* C# 
 * Ruby
 * Java
 * Perl
@@ -89,14 +89,25 @@ from osgeo import gdal
 First we open the raster so we can explore its attributes, as in the introduction.  GDAL will detect the format if it can, and return a *gdal.Dataset* object.
 
 ~~~
-ds = gdal.Open('<rootDir>/raster.tif')
+ds = gdal.Open('data/N38W120.tif')
 ~~~
 {: .python}
 
->## Filepath encodings:
+>## Filepath encodings in python 2.x:
 > GDAL expects the path to the raster to be ASCII or UTF-8.
 > This is common on linux and macs, but Windows is usually
 > [ISO-8859-1 (Latin-1)](https://en.wikipedia.org/wiki/ISO/IEC_8859-1).
+> Windows users can work around this by specifying the string encoding:
+>
+> ~~~
+> ds = gdal.Open(unicode('data/N38W120.tif', 'utf-8'))
+> ~~~
+> or
+> ~~~
+> ds = gdal.Open('data/N38W120.tif'.decode('utf-8'))
+> ~~~
+>
+> In Python 3.x, strings are encoded as UTF-8 by default.
 {: .callout}
 
 >## Note on Error Handling:
@@ -120,6 +131,8 @@ You'll notice this seemed to go very fast. That is because this step does not ac
 ### Inspecting the Dataset contents:
 
 Since rasters can be very, very large, GDAL will not read its contents into memory unless requested.
+
+[API documentation here](http://gdal.org/python/osgeo.gdal.Band-class.html)
 
 ~~~
 help(ds)
@@ -256,6 +269,22 @@ ds = None
 > access (which could be a security hazard), and kills the application via a Segmentation
 > Fault.
 {: .callout}
+
+> ## GDAL is not your typical python library!
+> GDAL is first and foremost a C++ library, and while the bindings provided allow
+> us to use it from python, there are several ways in which these libraries behave
+> differently from typical python packages:
+>
+> #### API mirrors the original C++ 
+> Most python packages these days adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/),
+> but the GDAL bindings mirror the C++ function calls as closely as possible.
+>
+> #### Errors do not raise exceptions by default
+>
+> #### Python crashes if we're not careful with object management
+>
+{: .callout}
+
 
 
 ## Basic visualization
