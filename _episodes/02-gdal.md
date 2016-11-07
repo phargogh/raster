@@ -375,4 +375,4 @@ Show some examples of what might be different about these libraries.
 
 Exercises:
  - Create a trivial raster from scratch with small dimensions
- - 
+ - Reproject a DEM into a new CRS 

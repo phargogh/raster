@@ -16,16 +16,15 @@ keypoints:
 
 ### What is PyGeoProcessing?
 
-* Under active development by the [Natural Capital Project](https://naturalcapitalproject.org)
-* Developed to provide memory-efficient geoprocessing for InVEST 
-    ([website](http://naturalcapitaproject.org/invest), [PyPI](https://pypi.python.org/pypi/natcap.invest), a suite of 
-    spatially-relevant Ecosystem Service models so that decision-makers running older or
-    low-powered systems can run our software and make better-informed landuse/marine spatial
-    planning decisions.
-* Key features:
-    * Memory-efficiency is top priority
-    * Computational efficiency is 2nd priority
-    * Programmable raster stack calculation
+PyGeoProcessing is a set of geospatial processing routines developed by the 
+[Natural Capital Project](http://naturalcapitalproject.org) in the development of InVEST
+([website](http://naturalcapitaproject.org/invest), [PyPI](https://pypi.python.org/pypi/natcap.invest)),
+a suite of ecosystem service models that help people understand tradeoffs in land-use/marine spatial 
+planning decisions.  Because of the constraints of InVEST, PyGeoProcessing is designed with memory-efficiency
+as the top priority, and computational efficiency second.
+
+* **Key features**:
+    * Programmable raster stack calculator
     * D-infinity routing:
         * Flow direction
         * watershed delineation
@@ -85,17 +84,44 @@ Demonstrate a gaussian filter.
 
 ### Zonal Statistics: ``pygeoprocessing.aggregate_values``
 
-Work through a gaussian filter example
+* example: find the median elevation of all DEM pixels under the yosemite polygon.
 
 ### Routing: ``pygeoprocessing.routing``
 
-Delineate a watershed?
+Possibilities:
+* Calculate slope for yosemite area.
+* Calculate the stream network layer
+
+Delineate a watershed.
 
 ### Block iteration: ``pygeoprocessing.iterblocks``
 
-General-purpose block iterations
+Block iteration allows us to:
+
+* Incrementally read in reasonable amounts of raster data and perform matrix operations on it
+* Keep track of a block's location in the context of the raster.
 
 #### Note on execution speed
+
+~~~
+from osgeo import gdal
+import time
+def timeit():
+    start_time = time.time()
+    ds = gdal.Open('data/landcover.tif')
+    array = ds.GetRasterBand(1).ReadAsArray()
+    print array.sum()
+    print 'Took %s' % time.time() - start_time
+
+timeit()
+~~~
+
+In this case, we have a raster that should fit into the system's main memory, so 
+this operation should be pretty quick.
+
+
+
+
 
 Compare iterblocks speed vs. reading a whole array into memory.
 Why is this slow?
