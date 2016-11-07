@@ -16,23 +16,20 @@ keypoints:
 - "Pixel values can be extracted to a numpy array"
 ---
 
-### What is GDAL (Geospatial Data Abstraction Library)?
+# What is GDAL (Geospatial Data Abstraction Library)?
 
-* C++ library originally developed as a side project by Frank Warmerdam
-* Has become a major open-source member of the Open Source Geospatial Foundation
-* OGR (GDAL-provided library for handing vector data) is also part of the project.
-* Together, GDAL/OGR contains 1.1M lines of code (not including comments and whitespace.
-* Almost ubiquitous in geospatial applications.
+* C/C++ library for reading, writing, and reprojecting raster and vector datasets
+    * Provides a single abstract data model for interacting with all supported formats
+    * Spatial reprojections provided by [PROJ.4](http://proj4.org/), a library for 
+      performing conversions between cartographic projections (currently maintained
+      by Frank Warmerdam).
+* Originally developed as a side project by Frank Warmerdam (first release in 2000)
+* Major open-source member of the Open Source Geospatial Foundation
+* OGR (GDAL-provided library for handing vector data) is also part of the project
+* Together, GDAL/OGR contains 1.1M lines of code (not including comments and whitespace
+* Almost ubiquitous in geospatial applications
 
-
-* originally developed by employees (Stephan Hoyer, Alex Kleeman and Eugene Brevdo) at [The Climate Corporation](https://climate.com/)
-* xaray extends some of the core functionality of Pandas:
-    * operations over _named_ dimensions
-    * selection by label instead of integer location
-    * powerful groupby functionality
-    * database-like joins
-
-### Supported Formats:
+# Supported Formats:
 
 As of the latest version of GDAL, 142 formats are supported, but builds for various platforms may omit support for some formats.  The docker images for this tutorial include a GDAL build with support for 124 formats, including a few that have both raster and vector layers.
 
@@ -57,30 +54,90 @@ Supported Formats:
   # There are lots more, results depend on your build
 {% endhighlight %}
 
-### Access to GDAL libararies
+## GDAL CLI Utilities
+
+GDAL provides a number of command-line utilities to automate common processes.  To see the utilities available on your system:
+
+{% highlight text%}
+$ ls -la /usr/local/bin/gdal*
+{% endhighlight %}
+
+A full listing of GDAL utilities is available on the [GDAL website](http://gdal.org/gdal_utilities.html). A few that might be particularly useful to you include:
+
+* ``gdalinfo`` - Describe relevant information about a raster, will include the Raster Attribute Table in XML, if one exsits.
+* ``gdal_translate`` - Copy contents of an existing raster image to a new one, with new creation options.
+* ``gdal_merge.py`` - We'll use this to merge our two DEMs together into a single raster file.
+* ``gdalmanage`` - Identify raster datatypes, and/or delete, rename, and copy files in a dataset. 
+
+Each of these GDAL utilities automate certain pieces of commonly-used functionality.  Python scripts can also be used as examples for how to use the GDAL python API for those
+writing software that interfaces directly with the SWIG API.
+
+## Access to GDAL libraries
 
 GDAL is a C++ library, but you don't need to write your software in C++ to use it.
 
-Official bindings [available for other languages](https://trac.osgeo.org/gdal/browser/trunk/gdal/swig?order=name):
-* Python [(PyPI page)](http://pypi.python.org/pypi/GDAL)
-* C# 
+Official bindings available for other languages:
+* Python [PyPI](http://pypi.python.org/pypi/GDAL)
+* C#
 * Ruby
 * Java
 * Perl
 * PHP
 
-Of course, you can write your software in C++ if you like :)
+Of course, you can write your software in C++ if you like :)  For the purposes of this tutorial, we'll interact with the official python bindings.
 
-## Using GDAL
+# Sample datasets
 
-### Sample dataset
+We'll use a couple of datasets for this tutorial, all of which are in ``/data``
+on the ``geohackweek2016/raster`` docker image.
 
-Need to pick a dataset and show how to download it.
+These datasets are projected in WGS84/UTM zone 11N, as they are located in the southern
+Sierra Nevada mountains in California.
 
-### begin by importing these libraries
+## ASTER DEMs
+
+ASTER GDEM is a product of METI and NASA.
+
+|--------------------------|--------------------------|
+| ``/data/N38W120.tif``    | ``/data/N37W120.tif``    |
+|--------------------------|--------------------------|
+| ![DEM 1](../N38W120.png) | ![DEM 1](../N37W120.png) |
+|--------------------------|--------------------------|
+
+Let's take a look at one of these rasters with ``gdalinfo``:
 
 ~~~
-import matplotlib
+$ gdalinfo /data/N38W120.tif
+~~~
+{: .shell}
+
+Note a few relevant details about the raster:
+
+    * Data type of raster is 16-bit integer
+    * The raster is compressed with ``DEFLATE`` mode
+    * Pixel values range from 1272 - 3762
+    * Note block size is a whole row of pixels.
+
+## Land-Use / Land-Cover
+
+This Land-use/land-cover raster is a part of a global climatology dataset produced by the USGS Land-Cover Institute.
+
+Download from: http://landcover.usgs.gov/global_climatology.php
+Citation: Broxton, P.D., Zeng, X., Sulla-Menashe, D., Troch, P.A., 2014a: A Global Land Cover Climatology Using MODIS Data. J. Appl. Meteor. Climatol., 53, 15931605. doi:http://dx.doi.org/10.1175/JAMC-D-13-0270.1 
+
+|---------------------------|
+| ``/data/landcover.tif``   |
+|---------------------------|
+| ![LULC](../landcover.png) |
+|---------------------------|
+
+# Using GDAL
+
+We'll interact primarily with GDAL through their official python bindings.
+
+## Begin by importing these libraries
+
+~~~
 from osgeo import gdal
 ~~~
 
@@ -89,25 +146,20 @@ from osgeo import gdal
 First we open the raster so we can explore its attributes, as in the introduction.  GDAL will detect the format if it can, and return a *gdal.Dataset* object.
 
 ~~~
-ds = gdal.Open('data/N38W120.tif')
+ds = gdal.Open('/data/N37W120.tif')
 ~~~
 {: .python}
 
->## Filepath encodings in python 2.x:
+You'll notice this seemed to go very fast. That is because this step does not 
+actually ask Python to read the data into memory. Rather, GDAL is just scanning 
+the contents of the file to allow us access to certain critical characteristics.
+
+>## Filepath encodings:
 > GDAL expects the path to the raster to be ASCII or UTF-8.
 > This is common on linux and macs, but Windows is usually
 > [ISO-8859-1 (Latin-1)](https://en.wikipedia.org/wiki/ISO/IEC_8859-1).
-> Windows users can work around this by specifying the string encoding:
->
-> ~~~
-> ds = gdal.Open(unicode('data/N38W120.tif', 'utf-8'))
-> ~~~
-> or
-> ~~~
-> ds = gdal.Open('data/N38W120.tif'.decode('utf-8'))
-> ~~~
->
-> In Python 3.x, strings are encoded as UTF-8 by default.
+> This will only be an issue with python 2.x, as the ``str`` type in python3 is
+> assumed to be encoded as UTF-8.
 {: .callout}
 
 >## Note on Error Handling:
@@ -126,18 +178,50 @@ ds = gdal.Open('data/N38W120.tif')
 {: .callout}
 
 
-You'll notice this seemed to go very fast. That is because this step does not actually ask Python to read the data into memory. Rather, GDAL is just scanning the contents of the file.. 
 
-### Inspecting the Dataset contents:
+### Inspecting the Dataset:
 
 Since rasters can be very, very large, GDAL will not read its contents into memory unless requested.
-
-[API documentation here](http://gdal.org/python/osgeo.gdal.Band-class.html)
 
 ~~~
 help(ds)
 ~~~
 {: .python}
+
+### Driver
+
+Which GDAL driver was used to open this dataset?
+
+~~~
+ds.GetDriver().LongName
+ds.GetDriver().ShortName
+~~~
+{: .python}
+
+Either of these format names are acceptable for internal GDAL or if we're creating our own raster datasets.
+
+### Coordinate Reference System:
+
+Each dataset can have a coordinate reference system defined, which we can retrieve as Well-Known Text (WKT).
+
+~~~
+ds.GetProjection()
+~~~
+{: .python}
+
+This isn't especially easy to read, but it is a valid projection string.  We can also print this
+nicely with a couple of extra steps, using the ``osgeo.osr`` module for manipulating spatial references.
+
+~~~
+from osgeo import osr
+
+raster_wkt = ds.GetProjection()
+spatial_ref = osr.SpatialReference()
+spatial_ref.ImportFromWkt(raster_wkt)
+print spatial_ref.ExportToPrettyWkt()
+~~~
+{: .python}
+
 
 ### Dimensions
 
@@ -149,6 +233,7 @@ ds.RasterXSize
 ds.RasterYSize
 ~~~
 {: .python}
+
 
 ### Block Sizes
 
@@ -183,6 +268,8 @@ array = band.ReadAsArray()
 ~~~
 {: .python}
 
+discuss: why would you want to use RasterXSize, RasterYSize vs. ``array.shape``?
+
 ## Copying Raster Datasets
 
 ### Copying files without GDAL:
@@ -205,15 +292,23 @@ shutil.copytree(
 ~~~
 {: .python}
 
-### Copying files with GDAL
+### Copying files with GDAL CLI utilities
 
+~~~
+gdalmanage copy /data/N37W120.tif /tmp/N37W120_copy.tif
+~~~
+{: .shell}
+
+
+### Copying files with GDAL SWIG bindings 
 ~~~
 from osgeo import gdal
 driver = gdal.GetDriverByName('GTiff')
 new_ds = driver.CreateCopy('/path/to/new_raster.tif', ds)
-new_ds = None
+new_ds = None  # flush the dataset to disk and close the underlying objects.
 ~~~
 {: .python}
+
 
 ### Creating new files with GDAL
 
@@ -270,27 +365,6 @@ ds = None
 > Fault.
 {: .callout}
 
-> ## GDAL is not your typical python library!
-> GDAL is first and foremost a C++ library, and while the bindings provided allow
-> us to use it from python, there are several ways in which these libraries behave
-> differently from typical python packages:
->
-> #### API mirrors the original C++ 
-> Most python packages these days adhere to [PEP8](https://www.python.org/dev/peps/pep-0008/),
-> but the GDAL bindings mirror the C++ function calls as closely as possible.
->
-> #### Errors do not raise exceptions by default
->
-> #### Python crashes if we're not careful with object management
->
-{: .callout}
-
-
-
-## Basic visualization
-
-Use matplotlib for some basic image previews.
-
 ### Other libraries that make use of GDAL:
 
 Show some examples of what might be different about these libraries.
@@ -298,3 +372,7 @@ Show some examples of what might be different about these libraries.
 * rasterio
 * PostGIS
 * GeoDjango (via postGIS)
+
+Exercises:
+ - Create a trivial raster from scratch with small dimensions
+ - 
