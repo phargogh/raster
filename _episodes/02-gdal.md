@@ -39,8 +39,8 @@ As of the latest version of GDAL, 142 formats are supported, but builds for vari
 > * ``ro`` - read-only support
 > * ``rw`` - reading and writing to existing files (and making copies) supported
 > * ``rw+`` - reading, writing and creation of new files supported
-> * ``v`` - the format supports virtual I/O
-> * ``a`` - the format support subdatasets
+> * ``v`` - the format supports streaming through virtual filesystem API.  Streaming sources include compressed archives (such as ``.tar.gz``) and remote file servers (such as HTTP, FTP)
+> * ``s`` - the format support subdatasets
 {: .callout}
 
 {% highlight bash%}
@@ -53,6 +53,17 @@ Supported Formats:
   ...
   # There are lots more, results depend on your build
 {% endhighlight %}
+
+Specifics about each format can be found with the ``--format`` parameter.  Let's take a look
+at the GeoTiff format, which is well-supported and has many possible creation options.
+
+{% highlight bash%}
+$ gdalinfo --format GTiff
+{% endhighlight %}
+
+GDAL also has prose documentation available for each format, including detailed information
+about creation options available on their website at: 
+[http://www.gdal.org/formats_list.html](http://www.gdal.org/formats_list.html).
 
 ## GDAL CLI Utilities
 
@@ -155,9 +166,10 @@ actually ask Python to read the data into memory. Rather, GDAL is just scanning
 the contents of the file to allow us access to certain critical characteristics.
 
 >## Filepath encodings:
-> GDAL expects the path to the raster to be ASCII or UTF-8.
-> This is common on linux and macs, but Windows is usually
-> [ISO-8859-1 (Latin-1)](https://en.wikipedia.org/wiki/ISO/IEC_8859-1).
+> GDAL expects the path to the raster to be ASCII or UTF-8, which is a common 
+> filesystem encoding on linux and macs. Windows is often
+> [ISO-8859-1 (Latin-1)](https://en.wikipedia.org/wiki/ISO/IEC_8859-1), or else
+> uses a codepage most similar to your locale.
 > This will only be an issue with python 2.x, as the ``str`` type in python3 is
 > assumed to be encoded as UTF-8.
 {: .callout}
@@ -181,7 +193,14 @@ the contents of the file to allow us access to certain critical characteristics.
 
 ### Inspecting the Dataset:
 
-Since rasters can be very, very large, GDAL will not read its contents into memory unless requested.
+Since rasters can be very, very large, GDAL will not read its contents into 
+memory until we need to access those values.  Various formats support different
+amounts of data (GeoTiff, should support exabytes-large files), so GDAL provides
+various methods to access attributes of the dataset without reading in all
+of the pixel values.
+
+As with any python library, the methods available from the ``ds`` object can be
+read through with ``help()``.
 
 ~~~
 help(ds)
@@ -190,7 +209,8 @@ help(ds)
 
 ### Driver
 
-Which GDAL driver was used to open this dataset?
+Since GDAL will happily open any dataset it knows how to open, one of the attributes
+we can query is the driver that was used:
 
 ~~~
 ds.GetDriver().LongName
@@ -198,7 +218,7 @@ ds.GetDriver().ShortName
 ~~~
 {: .python}
 
-Either of these format names are acceptable for internal GDAL or if we're creating our own raster datasets.
+You'll recognize these names from when we previously looked into ``gdalinfo --format(s)``.  Either of these format names are acceptable for internal GDAL or if we're creating our own raster datasets.
 
 ### Coordinate Reference System:
 
@@ -222,6 +242,12 @@ print spatial_ref.ExportToPrettyWkt()
 ~~~
 {: .python}
 
+If you're familiar with GIS software, the PROJ.4 projection string may be more useful:
+
+~~~
+print spatial_ref.ExportToProj4()
+~~~
+{: .python}
 
 ### Dimensions
 
@@ -259,12 +285,27 @@ array = ds.ReadAsArray()
 ~~~
 {: .python}
 
-To only read a specific band:
+In our case, the raster ``/data/N37W120.tif`` only contains a single band, so 
+both ``ds.ReadAsArray()`` and ``band.ReadAsArray()`` will return the same array.
+The number of bands can be checked before loading the array:
 
 ~~~
-ds = gdal.Open('path/to/raster.tif')
+ds.RasterCount
+~~~
+{: .python}
+
+Even if there is only 1 band in the raster, you can still retrieve the band object
+before accessing the raster's array. Note that some attributes, especially 
+nodata value and band-specific metadata.
+For a full listing of band attributes, see the 
+[GDAL Data Model documentation](http://www.gdal.org/gdal_datamodel.html) and the 
+[python API docs](http://www.gdal.org/python/osgeo.gdal.Band-class.html).
+
+~~~
 band = ds.GetRasterBand(1)
 array = band.ReadAsArray()
+nodata = band.GetNoDataValue()
+metadata = band.GetMetadata()
 ~~~
 {: .python}
 
@@ -376,3 +417,7 @@ Show some examples of what might be different about these libraries.
 Exercises:
  - Create a trivial raster from scratch with small dimensions
  - Reproject a DEM into a new CRS 
+ - Virtual Raster formats - why they can be awesome.
+
+Things to elaborate on:
+ - Virtual filesystems vs. Virtual rasters (VRT)
