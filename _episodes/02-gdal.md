@@ -340,8 +340,7 @@ array_part = band.ReadAsArray(
 ~~~
 {: .python}
 
-SHOW AN IMAGE HERE OF HOW MANY BLOCKS ARE READ IN TO MAKE THIS HAPPEN.
-
+![Blocks read in and discarded for a small window of values](N37W120-read-blocks.png)
 
 ## Copying Raster Datasets
 
