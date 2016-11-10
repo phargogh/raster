@@ -86,16 +86,19 @@ writing software that interfaces directly with the SWIG API.
 ## Access to GDAL libraries
 
 GDAL is a C++ library, but you don't need to write your software in C++ to use it.
+Official bindings are available for other languages: 
+Python [PyPI](http://pypi.python.org/pypi/GDAL), C#, Ruby, Java, Perl, and PHP.
 
-Official bindings available for other languages:
-* Python [PyPI](http://pypi.python.org/pypi/GDAL)
-* C#
-* Ruby
-* Java
-* Perl
-* PHP
+Of course, you can write your software in C++ if you like :)  For the purposes
+of this tutorial, we'll interact with the official python bindings.
 
-Of course, you can write your software in C++ if you like :)  For the purposes of this tutorial, we'll interact with the official python bindings.
+> ## A note about pythonic behavior
+>
+> There are several ways that GDAL's bindings behave that may catch you by surprise.
+> This tutorial will avoid most of them, but it's good to know that these exist if you
+> end up writing software that uses GDAL.  For the full list of gotchas, take a look at
+> [https://trac.osgeo.org/gdal/wiki/PythonGotchas](https://trac.osgeo.org/gdal/wiki/PythonGotchas)
+{: .callout}
 
 # Sample datasets
 
@@ -340,6 +343,9 @@ array_part = band.ReadAsArray(
 ~~~
 {: .python}
 
+Note that while the size of ``array_part`` is exactly what we requested, GDAL has to
+read in an enormous number of pixels in order to obtain the small, requested subset.
+
 ![Blocks read in and discarded for a small window of values](N37W120-read-blocks.png)
 
 ## Copying Raster Datasets
@@ -354,15 +360,6 @@ os.copyfile(
 ~~~
 {: .python}
 
-Or if your raster is a whole folder (as with ESRI Binary Grids):
-
-~~~
-import shutil
-shutil.copytree(
-    '/path/to/rasterdir',
-    '/path/to/newrasterdir')
-~~~
-{: .python}
 
 ### Copying files with GDAL CLI utilities
 
@@ -425,17 +422,6 @@ band = None
 ds = None
 ~~~
 {: .python}
-
-> ## A note about python's memory model
->
-> GDAL's python bindings interact with low-level C++ libraries, where memory is managed very
-> explicitly.  Python uses a system of reference counting to determine when python objects
-> should be cleaned up and their memory freed.  This can sometimes lead to situations where
-> GDAL expects certain objects to exist in memory, but Python has cleaned them up already.
-> When this happens, the OS detects that GDAL is reaching into memory it's not supposed to
-> access (which could be a security hazard), and kills the application via a Segmentation
-> Fault.
-{: .callout}
 
 ### Other libraries that make use of GDAL:
 
