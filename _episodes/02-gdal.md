@@ -109,11 +109,11 @@ Sierra Nevada mountains in California.
 
 ASTER GDEM is a product of METI and NASA.
 
-|--------------------------|--------------------------|
-| ``/data/N38W120.tif``    | ``/data/N37W120.tif``    |
-|--------------------------|--------------------------|
-| ![DEM 1](../N38W120.png) | ![DEM 1](../N37W120.png) |
-|--------------------------|--------------------------|
+|-----------------------|-----------------------|
+| ``/data/N38W120.tif`` | ``/data/N37W120.tif`` |
+|-----------------------|-----------------------|
+| ![DEM 1](N38W120.png) | ![DEM 1](N37W120.png) |
+|-----------------------|-----------------------|
 
 Let's take a look at one of these rasters with ``gdalinfo``:
 
@@ -134,13 +134,14 @@ Note a few relevant details about the raster:
 This Land-use/land-cover raster is a part of a global climatology dataset produced by the USGS Land-Cover Institute.
 
 Download from: http://landcover.usgs.gov/global_climatology.php
+
 Citation: Broxton, P.D., Zeng, X., Sulla-Menashe, D., Troch, P.A., 2014a: A Global Land Cover Climatology Using MODIS Data. J. Appl. Meteor. Climatol., 53, 15931605. doi:http://dx.doi.org/10.1175/JAMC-D-13-0270.1 
 
-|---------------------------|
-| ``/data/landcover.tif``   |
-|---------------------------|
-| ![LULC](../landcover.png) |
-|---------------------------|
+|-------------------------|
+| ``/data/landcover.tif`` |
+|-------------------------|
+| ![LULC](landcover.png)  |
+|-------------------------|
 
 # Using GDAL
 
@@ -270,6 +271,7 @@ later, but for now, you can access the block size like so:
 ~~~
 ds.GetBlockSize()
 ~~~
+
 {: .python}
 
 ## Reading Raster Values
@@ -309,7 +311,25 @@ metadata = band.GetMetadata()
 ~~~
 {: .python}
 
-discuss: why would you want to use RasterXSize, RasterYSize vs. ``array.shape``?
+
+While ``ReadAsArray()`` can be used to read the whole array into memory,
+you can also specify a subset of the raster or band to open with a few
+optional parameters to ``ReadAsArray()``.
+
+~~~
+band = ds.GetRasterBand(1)
+full_array = band.ReadAsArray()
+
+# Start at index (100, 100) and read in an array 250 pixels wide
+array_part = band.ReadAsArray(
+    xoff=100,
+    yoff=100,
+    xsize=250,
+    ysize=250)
+~~~
+
+SHOW AN IMAGE HERE OF HOW MANY BLOCKS ARE READ IN TO MAKE THIS HAPPEN.
+
 
 ## Copying Raster Datasets
 
