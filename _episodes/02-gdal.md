@@ -271,8 +271,19 @@ later, but for now, you can access the block size like so:
 ~~~
 ds.GetBlockSize()
 ~~~
-
 {: .python}
+
+In this case, the blocksize is one row at a time, but different rasters can be laid
+out differently on disk (represented by different block sizes).  The landcover
+raster, for example, has a very different blocksize:
+
+~~~
+lulc_ds = gdal.Open('/data/landcover.tif')
+lulc.GetBlockSize()
+~~~
+{: .python}
+
+![LULC blocksizes](landcover-blocks.png)
 
 ## Reading Raster Values
 
@@ -327,6 +338,7 @@ array_part = band.ReadAsArray(
     xsize=250,
     ysize=250)
 ~~~
+{: .python}
 
 SHOW AN IMAGE HERE OF HOW MANY BLOCKS ARE READ IN TO MAKE THIS HAPPEN.
 
