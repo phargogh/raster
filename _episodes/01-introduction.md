@@ -17,19 +17,61 @@ keypoints:
 - GIS tools (e.g. QGIS, SAGA GIS) are usually needed to visualize these datasets
 
 ---
-### Overview:
+# Overview:
 
 Scientists working with spatial data often need to manipulate datasets structured as arrays.  A common example is in working with hydrological modelling (e.g. where will water flow in a storm event?) using topographical data gathered from the US Geological Survey, or based on aerial or lidar photography gathered from a plane flying below the clouds.
 
 
-### Data We'll be using
+# Common types of Geospatial data
 
-* ASTER (Advanced Spaceborne Thermal Emission and Reflection Radiometer)
-    * Satellite operated by Japan, launched into Earth Orbit in 1999
-    * 30m pixels, elevation derived from 14 bands
-* Landsat 8
+* LULC
+* DEMs
+* Digital Orthoimages
 
-### Characteristics of a Raster:
+Remote sensing is a major source for raster graphics.
+
+# Characteristics of a Raster:
+
+## Data Model
+
+Rasters use a space-filling model, where all geographic features are represented
+by discreet cells, arranged in a specific sequence.  Geospatial raster datasets
+are effectively matrices with additional metadata to show which part of the 
+planet the dataset represents.
+
+#### Bands
+
+Bands are layers of values that overlap perfectly).  Depending on the source of your 
+raster, you may have multiple bands with numeric values that represent 
+different things.  A DEM might have a single band where values represent the 
+height of a pixel relative to sea level.  Or you could use a landsat image, 
+which uses three bands, one each for Red, Green, and Blue.
+
+Multiple sample values for a single dataset are represented as bands.
+
+SHOW AN IMAGE OR TWO HERE WITH BAND EXAMPLES
+
+{% highlight python %}
+from osgeo import gdal
+
+dataset = gdal.Open('path/to/raster.tif')
+dataset.RasterCount
+{% endhighlight %}
+
+
+#### NoData Value
+
+Raster datasets commonly make use of a **Nodata Value**, a numeric value that represents the lack of information in a pixel.  Visually, this is often represented as transparency.
+
+SHOW AN IMAGE HERE
+
+{% highlight python %}
+from osgeo import gdal
+
+dataset = gdal.Open('path/to/raster.tif')
+band = dataset.GetRasterBand(1)
+band.GetNoDataValue()
+{% endhighlight %}
 
 #### Coordinate Reference System
 
@@ -72,53 +114,16 @@ INCLUDE AN IMAGE OF THE ASTER DEMs.
 #### Affine GeoTransform
 Unfortunately, the CRS by itself is not enough to place the raster on the planet.  To do this, we need the Affine Geotransform, which allows us to map pixel coordinates into georeferenced space.
 
-
-{% highlight python %}
->>> from osgeo import gdal
->>> dataset = gdal.Open('path/to/raster.tif')
->>> dataset.GetGeoTransform()
-(233025.03117445827, 30.0, 0.0, 4210078.842723392, 0.0, -30.0)
-
-{% endhighlight %}
-
-
-How the geotransform is used to calculate pixel coordinates in space:
-
+    GT = (233025.03117445827, 30.0, 0.0, 4210078.842723392, 0.0, -30.0)
     Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
     Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
 
-Note that this significantly affects how pixels are indexed.  'North' could be either an
-increase or decrease in the row index, depending on the geotransform.
+Note that this significantly affects how pixels are arranged in space.  'Up'
+could be either an increase or decrease in the row index, depending on the 
+geotransform, and the image could be rotated.
 
-INCLUDE AN IMAGE OF THIS EFFECT, WITH A CORRESPONDING GEOTRANSFORM.
-
-#### Bands
-
-Bands are layers of values, where all layers share the same CRS and geotransform (so they overlap perfectly).  Depending on the source of your raster, you may have multiple bands with numeric values that represent different things.  A DEM might have a single band where values represent the height of a pixel relative to sea level.  Or you could use a landsat image, which uses three bands, one each for Red, Green, and Blue.
-
-SHOW AN IMAGE OR TWO HERE WITH BAND EXAMPLES
-
-{% highlight python %}
-from osgeo import gdal
-
-dataset = gdal.Open('path/to/raster.tif')
-dataset.RasterCount
-{% endhighlight %}
-
-
-#### NoData Value
-
-Raster datasets commonly make use of a **Nodata Value**, a numeric value that represents the lack of information in a pixel.  Visually, this is often represented as transparency.
-
-SHOW AN IMAGE HERE
-
-{% highlight python %}
-from osgeo import gdal
-
-dataset = gdal.Open('path/to/raster.tif')
-band = dataset.GetRasterBand(1)
-band.GetNoDataValue()
-{% endhighlight %}
+Many raster datasets have square or near-square pixels as well, but this is not a
+strict requirement.  The geotransform can support rectangular pixels of arbitrary size.
 
 ### Challenges with handling geospatial data
 
