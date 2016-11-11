@@ -55,27 +55,20 @@ Raw LANDSAT data contains several other bands as well:
 | Source: [NASA](https://svs.gsfc.nasa.gov/stories/Landsat/landsat_data.html)         |
 |-------------------------------------------------------------------------------------|
 
-{% highlight python %}
-from osgeo import gdal
-
-dataset = gdal.Open('path/to/raster.tif')
-dataset.RasterCount
-{% endhighlight %}
-
 
 #### NoData Value
 
-Raster datasets commonly make use of a **Nodata Value**, a numeric value that represents the lack of information in a pixel.  Visually, this is often represented as transparency.
+Since raster datasets use a space-filling model, every pixel has a value.
+Where pixel values should not have a value, a **Nodata Value** is used to indicate
+a lack of information in a pixel.  Visually, this is often represented in GIS as
+transparency.
 
-SHOW AN IMAGE HERE
+|------------------------------------------------------------------------------------------|
+| NW corner of /data/landcover.tif                                                         |
+|------------------------------------------------------------------------------------------|
+| ![Northwest corner os sample landcover raster demonstrating nodata](landcover-nodata.png)|
+|------------------------------------------------------------------------------------------|
 
-{% highlight python %}
-from osgeo import gdal
-
-dataset = gdal.Open('path/to/raster.tif')
-band = dataset.GetRasterBand(1)
-band.GetNoDataValue()
-{% endhighlight %}
 
 #### Coordinate Reference System
 
