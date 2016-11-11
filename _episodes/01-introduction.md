@@ -21,11 +21,10 @@ keypoints:
 
 Scientists working with spatial data often need to manipulate datasets structured as arrays.  A common example is in working with hydrological modelling (e.g. where will water flow in a storm event?) using topographical data gathered from the US Geological Survey, or based on aerial or lidar photography gathered from a plane flying below the clouds.
 
-
 # Common types of Geospatial data
 
-* LULC
-* DEMs
+* Classified Land-use / Land-cover datasets
+* Digital Elevation Models
 * Digital Orthoimages
 
 Remote sensing is a major source for raster graphics.
@@ -41,15 +40,20 @@ planet the dataset represents.
 
 #### Bands
 
-Bands are layers of values that overlap perfectly).  Depending on the source of your 
-raster, you may have multiple bands with numeric values that represent 
+Bands are layers of values that overlap perfectly.  Depending on the source of your 
+raster and the information it represents, you may have multiple bands with numeric values that represent 
 different things.  A DEM might have a single band where values represent the 
-height of a pixel relative to sea level.  Or you could use a landsat image, 
-which uses three bands, one each for Red, Green, and Blue.
+height of a pixel relative to sea level.  Or you could use a georeferenced 
+natural-color aerial photograph using three bands, one each for Red, Green, and Blue.
+Raw LANDSAT data contains several other bands as well:
 
-Multiple sample values for a single dataset are represented as bands.
-
-SHOW AN IMAGE OR TWO HERE WITH BAND EXAMPLES
+|-------------------------------------------------------------------------------------|
+| Bands of LANDSAT Thematic Mapper (TM) imagery                                       |
+|-------------------------------------------------------------------------------------|
+| ![Graphic labelling six bands of LANDSAT aerial photography](landsat_bands_all.gif) |
+|-------------------------------------------------------------------------------------|
+| Source: [NASA](https://svs.gsfc.nasa.gov/stories/Landsat/landsat_data.html)         |
+|-------------------------------------------------------------------------------------|
 
 {% highlight python %}
 from osgeo import gdal
