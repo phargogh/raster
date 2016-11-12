@@ -3,48 +3,80 @@ title: "Efficient raster computation with PyGeoProcessing"
 teaching: 20 
 exercises: 15 
 questions:
-- "What problems can PyGeoProcessing help me solve?"
+- "What problems can PyGeoProcessing address?"
 - "When should I use PyGeoProcessing?"
 objectives:
-- "Understand how to execute local (pixel stack) operations"
-- "Understand how to execute focal (convolution) operations"
-- "Understand how to route a DEM"
+- "Understand how to execute a pygeoprocessing-style workflow"
+- "Identify when and how PyGeoProcessing can benefit an analysis"
 keypoints:
 - "PyGeoProcessing provides programmable operations for efficient raster computations"
 - "Looping in python is slow; improve speed by iterating over blocks"
 ---
 
-### What is PyGeoProcessing?
+# What is PyGeoProcessing?
 
-PyGeoProcessing is a set of geospatial processing routines developed by the 
-[Natural Capital Project](http://naturalcapitalproject.org) in the development of InVEST
-([website](http://naturalcapitaproject.org/invest), [PyPI](https://pypi.python.org/pypi/natcap.invest)),
-a suite of ecosystem service models that help people understand tradeoffs in land-use/marine spatial 
-planning decisions.  Because of the constraints of InVEST, PyGeoProcessing is designed with memory-efficiency
-as the top priority, and computational efficiency second.
+![NatCap Logo](natcap-logo.png)
+![InVEST Logo](invest-logo.png)
+![PyGeoProcessing Logo](pygeoprocessing-logo.png)
+
+
+* [PyGeoProcessing](https://bitbucket.org/richpsharp/pygeoprocessing) is a 
+    python library of geospatial processing routines developed 
+    and maintained by the Natural Capital Project (NatCap).
+* Development began in 2011 as NatCap began migrating the [Integrated 
+    Valutation of Ecosystem Services and Tradeoffs (InVEST)](http://naturalcapitalproject.org/invest)
+    software to an open-source platform.
+    * InVEST is a software tool that helps decision-makers understand tradeoffs
+        in land-use and marine spatial planning decisions in terms of the benefits
+        provided by nature ("Ecosystem Services")
+    * Early versions of InVEST were free geoprocessing scripts based on ArcGIS
+        * Quickly ran into limitations of the platform:
+            * Difficult to batch-process lots of runs
+            * Very difficult to link different models together
+            * Model runs were very slow, sometimes taking days or weeks to run complex analyses
+    * The first free, purely open-source InVEST models were released in 2011
+    * Development of the new InVEST required a portable replacement of the
+        geoprocessing routines required by the models, but none existed at the 
+        time.
+    * PyGeoProcessing evolved from this need, and was released as its own
+        open-source project in 2015, announced at FOSS4G-NA.
+* PyGeoProcessing is designed with the same functional requirements of InVEST:
+    * Work within memory-constrained python environments (e.g. 32-bit python installations)
+    * Support very large datasets on a local filesystem
+    * Geoprocessing routines must be computationally efficient
+* PyGeoProcessing is under active development, and is being continually improved
 
 * **Key features**:
     * Programmable raster stack calculator
+    * 2D Convolution with an arbitrary kernel
+    * Euclidean Distance transform
+    * Reclassification
     * D-infinity routing:
+        * Stream network delineation
+        * Distance to stream
         * Flow direction
+        * Pixel export
         * watershed delineation
-    * Convolutions
-    * Dinstance transforms
     * Helper functions for:
         * iterating over raster blocks
-        * extracting key raster metadata
         * aligning and resampling stacks of rasters
-        * Creating new datasets
+        * extracting key raster metadata
+        * Creating new raster datasets
 
 ### What PyGeoProcessing can do for you
 
 #### When it makes sense to use PyGeoProcessing
+* You need a reproducible workflow for your analysis
+* Your analysis needs to be run many times (such as in optimization routines)
 * Your data is accessible on a single computer ("*large* but not *big*")
 * You have limited memory or are in a 32-bit programming environment
 
+
 #### Why not just use GIS software?
-* Most GIS installations are very large, and may break your script with each upgrade.
-* GIS don't always provide pure-python interfaces
+* Most GIS installations are very large, and may break your script with each upgrade (ArcGIS is notorious for this)
+* GIS don't always provide pure-python interfaces, or can't be run at the command-line
+* You can't ``pip install`` your GIS software
+
 
 #### Why not just use ``numpy`` directly on full matrices?
 If you can, go for it!  PyGeoProcessing is best for cases where your data are large
@@ -120,10 +152,15 @@ In this case, we have a raster that should fit into the system's main memory, so
 this operation should be pretty quick.
 
 
+* work through a vectorize_datasets workflow:
+    * Read in a CSV table
+    * Reclassify the LULC
+    * Take the DEMs, unproject them, join the two together, reproject them.
+    * Route the DEM, figure out the stream network.
+    * Use a convolution to locate pixels near a stream. (demo this in the shell with scipy.signal.convolve and sample stream)
+    * Use vectorize_datasets to locate perform some equation on the layers.
 
-
-
-Compare iterblocks speed vs. reading a whole array into memory.
-Why is this slow?
-
+* work through another workflow:
+    * use iterblocks to find the number of pixels that meet some criteria in the whole raster.
+    * time it!  Compare with reading a whole array into memory, and/or with a numpy.memmap array.
 
