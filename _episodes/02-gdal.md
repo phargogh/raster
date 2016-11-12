@@ -110,13 +110,21 @@ Sierra Nevada mountains in California.
 
 ## ASTER DEMs
 
-ASTER GDEM is a product of METI and NASA.
+ASTER (Advanced Spaceborne Thermal Emission and Reflection Radiometer) is a remote
+sensor operated as a collaboration between NASA and Japan's Ministry of Economy,
+Trade and Industry (METI).  Located on board the
+[Terra](https://en.wikipedia.org/wiki/Terra_(satellite)) satellite that was launched
+in 1999, raw ASTER data provides imagery across 14 bands at resolutions between 15
+and 90 meters.  The sample datasets we'll be using today are from the ASTER Global
+DEM (GDEM) version 2, and have been projected into the WGS84/UTM11N coordinate system.
 
 |-----------------------|-----------------------|
 | ``/data/N38W120.tif`` | ``/data/N37W120.tif`` |
 |-----------------------|-----------------------|
 | ![DEM 1](N38W120.png) | ![DEM 1](N37W120.png) |
 |-----------------------|-----------------------|
+| ASTER GDEM is a product of METI and NASA.     |
+|-----------------------------------------------|
 
 Let's take a look at one of these rasters with ``gdalinfo``:
 
@@ -127,6 +135,7 @@ $ gdalinfo /data/N38W120.tif
 
 Note a few relevant details about the raster:
 
+	* Only 1 band in this raster
     * Data type of raster is 16-bit integer
     * The raster is compressed with ``DEFLATE`` mode
     * Pixel values range from 1272 - 3762
@@ -134,17 +143,20 @@ Note a few relevant details about the raster:
 
 ## Land-Use / Land-Cover
 
-This Land-use/land-cover raster is a part of a global climatology dataset produced by the USGS Land-Cover Institute.
+This Land-use/land-cover raster is a subset of a global climatology analysis
+based on Moderate-resolution imaging spectroradiometer (MODIS) datasets at a 
+1km scale.  The MODIS sensor is on board the same satellite as the ASTER 
+sensor, and records data at a scale between 250m and 1km across 36 bands.
+This raster dataset has been clipped to a region that includes the southern
+portion of the Sierra Nevada mountain range.
 
-Download from: http://landcover.usgs.gov/global_climatology.php
-
-Citation: Broxton, P.D., Zeng, X., Sulla-Menashe, D., Troch, P.A., 2014a: A Global Land Cover Climatology Using MODIS Data. J. Appl. Meteor. Climatol., 53, 15931605. doi:http://dx.doi.org/10.1175/JAMC-D-13-0270.1 
-
-|-------------------------|
-| ``/data/landcover.tif`` |
-|-------------------------|
-| ![LULC](landcover.png)  |
-|-------------------------|
+|------------------------------------------------------------------|
+| ``/data/landcover.tif``              							   |
+|------------------------------------------------------------------|
+| ![LULC](landcover.png)             							   |
+|------------------------------------------------------------------|
+| Source: [USGS](http://landcover.usgs.gov/global_climatology.php) |
+|------------------------------------------------------------------|
 
 # Using GDAL
 
@@ -282,7 +294,7 @@ raster, for example, has a very different blocksize:
 
 ~~~
 lulc_ds = gdal.Open('/data/landcover.tif')
-lulc.GetBlockSize()
+lulc_ds.GetBlockSize()
 ~~~
 {: .python}
 
@@ -302,7 +314,7 @@ array = ds.ReadAsArray()
 {: .python}
 
 In our case, the raster ``/data/N37W120.tif`` only contains a single band, so 
-both ``ds.ReadAsArray()`` and ``band.ReadAsArray()`` will return the same array.
+both ``ds.ReadAsArray()`` and ``band.ReadAsArray()`` will return the same data.
 The number of bands can be checked before loading the array:
 
 ~~~
@@ -428,13 +440,15 @@ ds = None
 Show some examples of what might be different about these libraries.
 
 * rasterio
-* PostGIS
+* greenwich
 * GeoDjango (via postGIS)
 
 Exercises:
  - Create a trivial raster from scratch with small dimensions
  - Reproject a DEM into a new CRS 
  - Virtual Raster formats - why they can be awesome.
+ - Create a raster on disk with 3 bands, each with a different value.
+ - Do something interesting with the geotransform and pixel sizes ... compute overlap?
 
 Things to elaborate on:
  - Virtual filesystems vs. Virtual rasters (VRT)
