@@ -75,9 +75,6 @@ transparency.
 Raster datasets are fundamentally images, where each pixel has a value.  The spatial element of this dataset, however, lies in its Coordinate Reference System (CRS).  Here's an example CRS, represented as <a href="https://en.wikipedia.org/wiki/Well-known_text">Well-Known text </a>:
 
 {% highlight text %}
->>> from osgeo import gdal
->>> ds = gdal.Open('data/N37W120.tif')
->>> ds.GetProjection()
 PROJCS["WGS 84 / UTM zone 11N",                         # Name of the projected coordinate system
     GEOGCS["WGS 84",                                    # Geographic coordinate system
         DATUM["WGS_1984",                               # The datum (mathematical shape of the earth)
@@ -99,17 +96,31 @@ PROJCS["WGS 84 / UTM zone 11N",                         # Name of the projected 
     PARAMETER["false_northing",0],
     AUTHORITY["EPSG","32611"],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]
+    AXIS["Northing",NORTH
 
 {% endhighlight %}
 
-This collection of numbers and standards describes how to transform the 3-dimensional surface of the earth into a 2-dimensional image.  Getting projections right is a tricky business, and one that can take a great deal of expertise. ASTER DEMs come in the WGS84 geographic coordinate system, but are unprojected.  The datasets included in this tutorial are projected into UTM zone 11N.
+This collection of numbers and standards describes how to transform the
+3-dimensional surface of the earth into a 2-dimensional image.  Getting 
+projections right is a tricky business, and one that can take a great deal of 
+expertise. ASTER DEMs come in the WGS84 geographic coordinate system, but are 
+unprojected.  The datasets included in this tutorial are projected into UTM 
+zone 11N.
 
-INCLUDE AN IMAGE OF THE ASTER DEMs.
+The projection you choose can make a very big difference in the display of
+information.  Here's an ASTER DEM from the Sierra Nevada mountains in 
+California with different projections:
 
+|---------------------------------------------------|-----------------------------------------------------|----------------------------------------------------|
+| Unprojected                                       | Projected in UTM Zone 11N                           | Projected in North Pole LAEA Alaska                |
+|---------------------------------------------------|-----------------------------------------------------|----------------------------------------------------|
+| ![Unprojected DEM](ASTER-N37W120-unprojected.png) | ![UTM zone 11N](ASTER-N37W120-UTM11N.png)           | ![North Pole LAEA](ASTER-N37W120-northpole.png)    |
+|---------------------------------------------------|-----------------------------------------------------|----------------------------------------------------|
 
 #### Affine GeoTransform
-Unfortunately, the CRS by itself is not enough to place the raster on the planet.  To do this, we need the Affine Geotransform, which allows us to map pixel coordinates into georeferenced space.
+Unfortunately, the CRS by itself is not enough to place the raster on the 
+planet.  To do this, we need the Affine Geotransform, which allows us to map 
+pixel coordinates into georeferenced space.
 
     GT = (233025.03117445827, 30.0, 0.0, 4210078.842723392, 0.0, -30.0)
     Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
