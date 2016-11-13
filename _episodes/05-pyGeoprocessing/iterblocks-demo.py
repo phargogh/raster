@@ -47,6 +47,9 @@ print 'Percentage of park land above 3500m: %s%%' % round(
     (num_3500_pixels / num_park_pixels) * 100, 2)
 
 # Compare iterblocks time with pure-numpy approach.
+# Expected: This will be slightly faster than loading into memory, but not by
+# much.  Real gains come when iterating over dataset too large to fit into main
+# memory.
 start_time = time.time()
 park_raster = gdal.Open(blank_raster)
 park_array = park_raster.ReadAsArray()
