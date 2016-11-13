@@ -105,7 +105,21 @@ something this simple.  For this reason, you may need to compile your focal
 operations to get them to run fast.
 
 
-## Single-output example workflow: Locate Steep, High-Elevation Grasslands in Yosemite
+## Single-output workflow: Steep, High-Elevation Grasslands in Yosemite
+
+> ## Running this code within the docker image
+> Since we're writing programs here that are most convenient to have within a file
+> instead of within a python shell, it'll be most useful to run this program through
+> the docker image from this tutorial.
+>
+> I'd recommend mounting your current workspace to ``/shared`` within the docker image.
+>
+> ~~~
+> $ docker run -ti -v {path to your current workspace}:/shared geohackweek2016/rastertutorial:latest python /shared/{filename}.py
+> ~~~
+> {: .shell}
+{: .callout}
+
 
 ~~~
 import os
