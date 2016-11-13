@@ -70,6 +70,7 @@ keypoints:
 * Your analysis needs to be run many times (such as in optimization routines)
 * Your data is accessible on a single computer ("*large* but not *big*")
 * You have limited memory or are in a 32-bit programming environment
+* Your program needs to be able to work with inputs that could be inconveniently large (won't fit into active memory)
 
 
 #### Why not just use GIS software?
@@ -84,6 +85,7 @@ enough that you cannot fit it all into main memory, for efficiently automating
 complex workflows, and for common nontrivial operations.
 It won't be relevent for every use case.
 
+###### Overhead of looping in python
 Some operations that require a lot of looping, though, are especially challenging to
 do in python.  In a python loop, every iteration needs to be able to handle all of the
 possible types that a value might be.  For every line of python, at least 20 lines of C++
@@ -103,6 +105,10 @@ def foo():
 Compare it with the [C code that must be executed](loop-overhead.html) to do
 something this simple.  For this reason, you may need to compile your focal
 operations to get them to run fast.
+
+##### Swapping Active Memory is Expensive
+
+Note about numpy.memmap.
 
 
 ## Single-output workflow: Steep, High-Elevation Grasslands in Yosemite
