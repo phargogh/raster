@@ -5,3 +5,5 @@ RUN pip install gdal
 RUN pip install pygeoprocessing
 RUN mkdir /data /notebooks
 COPY /data/ /data
+# annoyingly, the conda install doesn't set this environment variable.
+ENV GDAL_DATA /opt/conda/share/gdal
