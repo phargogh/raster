@@ -78,10 +78,11 @@ keypoints:
 * You can't ``pip install`` your GIS software
 
 
-#### Why not just use ``numpy`` directly on full matrices?
+#### Why not just use ``numpy`` directly on extracted matrices?
 If you can, go for it!  PyGeoProcessing is best for cases where your data are large
-enough that you cannot fit it all into main memory, and for efficiently automating
-complex workflows.  It won't be relevent for every use case.
+enough that you cannot fit it all into main memory, for efficiently automating
+complex workflows, and for common nontrivial operations.
+It won't be relevent for every use case.
 
 
 ### Local Operations: ``pygeoprocessing.vectorize_datasets``
@@ -152,12 +153,22 @@ In this case, we have a raster that should fit into the system's main memory, so
 this operation should be pretty quick.
 
 
+* Locate all grasslands within 200m of streams above 2000m elevation.
+    * Inputs to vectorize_datasets:
+        * Mosaiced DEMs in the same projection (EPSG:32611), clipped to yosemite AOI
+        * Stream layer generated from DEM with known threshold.
+        * EDT generated from stream layer
+    * Function required:
+        * Mask out areas of nodata
+        * If lulc is grassland and EDT < 200 and DEM >= 2000, 1 else 0 
+    * Output type = Int16, nodata=-1
+
+
 * work through a vectorize_datasets workflow:
     * Read in a CSV table
     * Reclassify the LULC
     * Take the DEMs, unproject them, join the two together, reproject them.
     * Route the DEM, figure out the stream network.
-    * Use a convolution to locate pixels near a stream. (demo this in the shell with scipy.signal.convolve and sample stream)
     * Use vectorize_datasets to locate perform some equation on the layers.
 
 * work through another workflow:
