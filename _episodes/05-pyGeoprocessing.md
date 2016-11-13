@@ -74,7 +74,7 @@ keypoints:
 
 #### Why not just use GIS software?
 * Most GIS installations are very large, and may break your script with each upgrade (ArcGIS is notorious for this)
-* GIS don't always provide pure-python interfaces, or can't be run at the command-line
+* GIS don't always provide pure-python interfaces, or can't execute scripts from the command-line
 * You can't ``pip install`` your GIS software
 
 
@@ -83,6 +83,153 @@ If you can, go for it!  PyGeoProcessing is best for cases where your data are la
 enough that you cannot fit it all into main memory, for efficiently automating
 complex workflows, and for common nontrivial operations.
 It won't be relevent for every use case.
+
+Some operations that require a lot of looping, though, are especially challenging to
+do in python.  In a python loop, every iteration needs to be able to handle all of the
+possible types that a value might be.  For every line of python, at least 20 lines of C++
+are executed.  This means that if your dataset is of any reasonable size and you need
+to visit every pixel, you  may want to consider compiling a cython extension.
+
+Consider this simple python function.
+
+~~~
+def foo():
+    count = 0
+    for i in xrange(100):
+        count += i
+~~~
+{: .python}
+
+Compare it with the [C code that must be executed](loop-overhead.html) to do
+something this simple.  For this reason, you may need to compile your focal
+operations to get them to run fast.
+
+
+## Single-output example workflow: Locate Steep, High-Elevation Grasslands in Yosemite
+
+~~~
+import os
+import logging
+LOGGER = logging.getLogger('grasslands_demo')
+logging.basicConfig(level=logging.INFO)
+
+from osgeo import gdal
+import pygeoprocessing
+
+OUTPUT_DIR = '/shared/grasslands_demo'
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
+~~~
+{: .python}
+
+For this tutorial, we'll be making use of three rasters and one vector, 
+all of which have already been projected ino a local coordinate system.
+
+~~~
+north_dem = '/data/N38W120.tif'
+south_dem = '/data/N37W120.tif'
+landcover = '/data/landcover.tif'
+yosemite_vector = '/data/yosemite.shp'
+~~~
+{:.python}
+
+
+### Joining our two DEMs
+|-----------------------|-----------------------|
+| ``/data/N38W120.tif`` | ``/data/N37W120.tif`` |
+|-----------------------|-----------------------|
+| ![DEM 1](N38W120.png) | ![DEM 1](N37W120.png) |
+|-----------------------|-----------------------|
+| ASTER GDEM is a product of METI and NASA.     |
+|-----------------------------------------------|
+
+~~~
+LOGGER.info('Merging DEMs')
+import numpy
+def _merge_dems(north_block, south_block):
+    """Merge the two DEMs, picking the max value where overlap occurs."""
+    valid_mask = (north_block != -1) | (south_block != -1)
+    out_matrix = numpy.empty(north_block.shape)
+    out_matrix[:] = -1
+    out_matrix[valid_mask] = numpy.maximum(north_block[valid_mask],
+                                           south_block[valid_mask])
+    return out_matrix
+
+pygeoprocessing.vectorize_datasets(
+    dataset_uri_list=[north_dem, south_dem],
+    dataset_pixel_op=_merge_dems,
+    dataset_out_uri=joined_dem,
+    datatype_out=gdal.GDT_Int16,
+    nodata_out=-1.0,
+    # We could calculate projected units by hand, but this is more convenient.
+    pixel_size_out=30.0,
+    bounding_box_mode='union',
+    vectorize_op=False,
+    aoi_uri=yosemite_vector,
+)
+~~~
+{:.python}
+
+NEED AN IMAGE OF THIS
+
+
+### Calculate Slope
+
+~~~
+LOGGER.info('Calculating slope')
+slope_raster = os.path.join(OUTPUT_DIR, 'slope.tif')
+pygeoprocessing.calculate_slope(
+    dem_dataset_uri=joined_dem,
+    slope_uri=slope_raster)
+~~~
+{:.python}
+
+NEED AN IMAGE OF THIS
+
+### Locate Steep, High-Elevation Grasslands
+
+~~~
+lulc_nodata = pygeoprocessing.get_nodata_from_uri(lulc)
+dem_nodata = pygeoprocessing.get_nodata_from_uri(joined_dem)
+slope_nodata = pygeoprocessing.get_nodata_from_uri(slope_raster)
+
+out_nodata = -1
+def _find_grasslands(lulc_blk, dem_blk, slope_blk):
+    # All blocks will be the same dimensions
+
+    # Create a mask of invalid pixels due to nodata values
+    valid_mask = ((lulc_blk != lulc_nodata) &
+                  (dem_blk != dem_nodata) &
+                  (slope_blk!= slope_nodata))
+
+    # grasslands are lulc code 10
+    matching_grasslands = ((lulc_blk[valid_mask] == 10) &
+                           (slope_blk[valid_mask] >= 45) &
+                           (dem_blk[valid_mask] >= 2000))
+
+    out_block = numpy.empty(lulc_blk.shape)
+    out_block[:] = 0
+    out_block[~valid_mask] = out_nodata
+    out_block[valid_mask] = matching_grasslands
+    return out_block
+
+
+pygeoprocessing.vectorize_datasets(
+    dataset_uri_list=[lulc, joined_dem, slope_raster],
+    dataset_pixel_op=_find_grasslands,
+    dataset_out_uri=os.path.join(OUTPUT_DIR, 'high_elev_steep_grasslands.tif'),
+    datatype_out=gdal.GDT_Int16,
+    nodata_out=out_nodata,
+    # We could calculate projected units by hand, but this is more convenient.
+    pixel_size_out=pygeoprocessing.get_cell_size_from_uri(joined_dem),
+    bounding_box_mode='intersection',
+    vectorize_op=False,  # we
+    aoi_uri=yosemite_vector)
+~~~
+{:.python}
+
+NEED AN IMAGE OF THIS
+
 
 
 ### Local Operations: ``pygeoprocessing.vectorize_datasets``
@@ -97,14 +244,6 @@ A trivial example would be to add pixels together.
 
 In PyGeoProcessing, ``pygeoprocessing.vectorize_datasets`` allows us to do this with all
 of the flexibility of the python programming language.
-
-#### Special case: reclassification ``pygeoprocessing.reclassify_dataset_uri``
-
-
-
-
-Work through a multi-raster vectorize_datasets example
-Maybe calculate erosivity or something?
 
 ### Focal Operations:  ``pygeoprocessing.raster_focal_op``
 
