@@ -78,6 +78,7 @@ dem_nodata = pygeoprocessing.get_nodata_from_uri(reprojected_dem)
 stream_nodata = pygeoprocessing.get_nodata_from_uri(edt_from_streams)
 
 out_nodata = -1
+import numpy
 def _find_grasslands(lulc_blk, dem_blk, stream_dist_blk):
     # All blocks will be the same dimensions
 
@@ -92,15 +93,35 @@ def _find_grasslands(lulc_blk, dem_blk, stream_dist_blk):
                            dem_blk[nodata_mask] >= 2000)
 
     out_block = numpy.empty(lulc_blk.shape)
-    out_block[:] = out_nodata
+    out_block[:] = 0
+    out_block[nodata_mask] = out_nodata
     out_block[~nodata_mask] = matching_grasslands
     return out_block
 
+
+def _find_grasslands_pixels(lulc_pixel, dem_pixel, stream_dist_pixel):
+    if any(lulc_pixel == lulc_nodata,
+           dem_pixel == dem_nodata,
+           stream_dist_pixel == stream_nodata):
+        return out_nodata
+    elif all(lulc_pixel == 10,
+             stream_dist_pixel <= 300,
+             dem_pixel >= 2000):
+        return 1
+    return 0
 
 
 pygeoprocessing.vectorize_datasets(
     dataset_uri_list=[lulc, reprojected_dem, edt_from_streams],
     dataset_pixel_op=_find_grasslands,
+    dataset_out_uri=os.path.join(OUTPUT_DIR, 'high_elev_riparian_grasslands.tif'),
+    datatype_out=gdal.GDT_Int16,
+    nodata_out=out_nodata,
+    # We could calculate projected units by hand, but this is more convenient.
+    pixel_size_out=pygeoprocessing.get_cell_size_from_uri(reprojected_dem),
+    bounding_box_mode='intersection',
+    vectorize_op=False,  # we
+    aoi_uri=yosemite_vector)
 
 
 
