@@ -46,65 +46,34 @@ pygeoprocessing.vectorize_datasets(
     aoi_uri=yosemite_vector,
 )
 
-# Next, we need to generate the stream layer.
-# This will be an output raster with pixel values of 1 or 0 indicating whether
-# the pixel is determined to be on a stream.
-from pygeoprocessing.routing import routing
-
-# Flow direction determines which pixels water flows into
-LOGGER.info('Calculating flow direction')
-flow_direction = os.path.join(OUTPUT_DIR, 'flow_direction.tif')
-routing.flow_direction_d_inf(
-    dem_uri=joined_dem,
-    flow_direction_uri=flow_direction)
-
-# Flow accumulation is the accumulated weight of all cells flowing
-# into each downlope pixel in the raster.
-LOGGER.info('Calculating flow accumulation')
-flow_accumulation = os.path.join(OUTPUT_DIR, 'flow_accumulation.tif')
-routing.flow_accumulation(
-    flow_direction_uri=flow_direction,
-    dem_uri=joined_dem,
-    flux_output_uri=flow_accumulation,
-    aoi_uri=yosemite_vector)
-
-# After <threshold> number of pixels flow into a cell, the cell becomes a
-# stream.
-LOGGER.info('Delineating streams')
-streams = os.path.join(OUTPUT_DIR, 'streams.tif')
-routing.stream_threshold(
-    flow_accumulation_uri=flow_accumulation,
-    flow_threshold=250,
-    stream_uri=streams)
-
-# Now, we need to use the streams raster as an EDT mask
-LOGGER.info('Calculating euclidean distance to streams')
-edt_from_streams = os.path.join(OUTPUT_DIR, 'euclidean_dist_to_streams.tif')
-pygeoprocessing.distance_transform_edt(
-    input_mask_uri=streams,
-    output_distance_uri=edt_from_streams)
+# Next we need to calculate the slope layer.
+LOGGER.info('Calculating slope')
+slope_raster = os.path.join(OUTPUT_DIR, 'slope.tif')
+pygeoprocessing.calculate_slope(
+    dem_dataset_uri=joined_dem,
+    slope_uri=slope_raster)
 
 # OK!  Now we add it all together with a call to vectorize_datasets
-LOGGER.info('Finding high-elevation grasslands near streams')
+LOGGER.info('Finding high-elevation, steep grasslands')
 lulc = '/data/landcover.tif'
 
 # segfault if I do this: gdal.Open(lulc).GetRasterBand(1).GetNoDataValue()
 lulc_nodata = pygeoprocessing.get_nodata_from_uri(lulc)
 dem_nodata = pygeoprocessing.get_nodata_from_uri(joined_dem)
-stream_nodata = pygeoprocessing.get_nodata_from_uri(edt_from_streams)
+slope_nodata = pygeoprocessing.get_nodata_from_uri(slope_raster)
 
 out_nodata = -1
-def _find_grasslands(lulc_blk, dem_blk, stream_dist_blk):
+def _find_grasslands(lulc_blk, dem_blk, slope_blk):
     # All blocks will be the same dimensions
 
     # Create a mask of invalid pixels due to nodata values
     valid_mask = ((lulc_blk != lulc_nodata) &
                   (dem_blk != dem_nodata) &
-                  (stream_dist_blk != stream_nodata))
+                  (slope_blk!= slope_nodata))
 
     # grasslands are lulc code 10
     matching_grasslands = ((lulc_blk[valid_mask] == 10) &
-                           (stream_dist_blk[valid_mask] <= 300) &
+                           (slope_blk[valid_mask] >= 45) &
                            (dem_blk[valid_mask] >= 2000))
 
     out_block = numpy.empty(lulc_blk.shape)
@@ -114,22 +83,22 @@ def _find_grasslands(lulc_blk, dem_blk, stream_dist_blk):
     return out_block
 
 
-def _find_grasslands_pixels(lulc_pixel, dem_pixel, stream_dist_pixel):
+def _find_grasslands_pixels(lulc_pixel, dem_pixel, slope_pixel):
     if any(lulc_pixel == lulc_nodata,
            dem_pixel == dem_nodata,
-           stream_dist_pixel == stream_nodata):
+           slope_pixel == slope_nodata):
         return out_nodata
     elif all(lulc_pixel == 10,
-             stream_dist_pixel <= 300,
+             slope_pixel >= 20,
              dem_pixel >= 2000):
         return 1
     return 0
 
 
 pygeoprocessing.vectorize_datasets(
-    dataset_uri_list=[lulc, joined_dem, edt_from_streams],
+    dataset_uri_list=[lulc, joined_dem, slope_raster],
     dataset_pixel_op=_find_grasslands,
-    dataset_out_uri=os.path.join(OUTPUT_DIR, 'high_elev_riparian_grasslands.tif'),
+    dataset_out_uri=os.path.join(OUTPUT_DIR, 'high_elev_steep_grasslands.tif'),
     datatype_out=gdal.GDT_Int16,
     nodata_out=out_nodata,
     # We could calculate projected units by hand, but this is more convenient.
@@ -137,6 +106,3 @@ pygeoprocessing.vectorize_datasets(
     bounding_box_mode='intersection',
     vectorize_op=False,  # we
     aoi_uri=yosemite_vector)
-
-
-
