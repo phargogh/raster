@@ -4,7 +4,7 @@ teaching: 30
 exercises: 15
 questions:
 - "What problems can PyGeoProcessing address?"
-- "When should I use PyGeoProcessing?"
+- "When might PyGeoProcessing be helpful?"
 objectives:
 - "Understand how to execute a pygeoprocessing-style workflow"
 - "Identify when and how PyGeoProcessing can benefit an analysis"
