@@ -10,7 +10,9 @@ objectives:
 - "Identify when and how PyGeoProcessing can benefit an analysis"
 keypoints:
 - "PyGeoProcessing provides programmable operations for efficient raster computations"
-- "Looping in python is slow; improve speed by iterating over blocks"
+- "PyGeoProcessing is most useful for **large but not big** data"
+- "PyGeoProcessing can help you to align inputs so they overlap perfectly"
+- "If your rasters may be too large to fit into main memory, PyGeoProcessing may be faster than matrix operations"
 ---
 
 # What is PyGeoProcessing?
@@ -276,6 +278,11 @@ pygeoprocessing.vectorize_datasets(
 
 Useful for: analyzing pixels inside of a raster or set of overlapping rasters.
 
+``pygeoprocessing.iterblocks`` is a generator that on each iteration provides:
+
+* A dict of contextual information (where the block is located within the raster)
+* A numpy array of the block that was just loaded
+
 ~~~
 import os
 
@@ -288,15 +295,7 @@ if not os.path.exists(OUTPUT_DIR):
 
 # We'll use the DEM from the tutorial above.
 dem = '/shared/grasslands_demo/joined_dem.tif'
-~~~
-{: .python}
 
-``pygeoprocessing.iterblocks`` is a generator that on each iteration provides:
-
-* A dict of contextual information (where the block is located within the raster)
-* A numpy array of the block that was just loaded
-
-~~~
 num_park_pixels = 0.
 num_3500_pixels = 0.
 for dem_info, dem_block in pygeoprocessing.iterblocks(dem):
@@ -323,16 +322,100 @@ stats = pygeoprocessing.aggregate_raster_values_uri(
     raster_uri=dem,
     shapefile_uri=yosemite_vector)
 
-print stats.total
-print stats.pixel_mean
-print stats.hectare_mean
-print stats.n_pixels
-print stats.pixel_min
-print stats.pixel_max
+
+# Print the mean hight across the park
+# 9999 is used as a Feature ID when we aggregate across the whole vector
+print stats.pixel_mean[9999]
 ~~~
 {: .python}
 
+# Preparing a Stack of Rasters
 
+It can be very useful to process a stack of rasters such that they align perfectly.
+This is especially handy if we need to use these aligned rasters later on.
 
+~~~
+aligned_dir= '/shared/alignment_demo'
+if not os.path.exists(aligned_dir)
+pygeoprocessing.align_dataset_list(
+    dataset_uri_list=[landcover, dem],
+    dataset_out_uri_list=[
+        os.path.join(aligned_dir, 'landcover_aligned.tif'),
+        os.path.join(aligned_dir, 'dem_aligned.tif')],
+    resample_method_list=['nearest', 'nearest'],
+    out_pixel_size=pygeoprocessing.get_cell_size_from_uri(dem),
+    mode='intersection',
+    dataset_to_align_index=0
+)
+~~~
 
+> ## Exercise 1: What's the mean elevation of evergreen forest in Yosemite?
+> 
+> There are several ways to do this.  The key is getting the LULC and the
+> DEM rasters to the same shape and resolution.
+>
+> ### Approach #1: ``vectorize_datasets`` and ``aggregate_raster_values_uri``
+> ~~~
+> import os
+> 
+> import pygeoprocessing
+> import numpy
+> from osgeo import gdal
+> 
+> def _dem_values_under_evergreen_forest(lulc_block, dem_block):
+>     out_matrix = numpy.empty(lulc_block.shape)
+>     out_matrix[:] = -1
+>     matching_landcover_mask = lulc_block == 1
+>     out_matrix[matching_landcover_mask] = dem_block[matching_landcover_mask]
+>     return out_matrix
+> 
+> 
+> out_path = '/shared/mean_elevation_exercise/matching_pixels.tif'
+> out_dir = os.path.dirname(out_path)
+> if not os.path.exists(out_dir):
+>     os.makedirs(out_dir)
+> 
+> dem_path = '/shared/grasslands_demo/joined_dem.tif'
+> pygeoprocessing.vectorize_datasets(
+>     dataset_uri_list=['/data/landcover.tif', dem_path],
+>     dataset_pixel_op=_dem_values_under_evergreen_forest,
+>     dataset_out_uri=out_path,
+>     datatype_out=gdal.GDT_Int16,
+>     nodata_out=-1,
+>     pixel_size_out=pygeoprocessing.get_cell_size_from_uri(dem_path),
+>     bounding_box_mode='intersection')
+> 
+> stats = pygeoprocessing.aggregate_raster_values_uri(
+>     out_path, '/data/yosemite.shp')
+> 
+> print stats.pixel_mean[9999]
+> ~~~
+> {: .python}
+>
+>
+> ### Approach #2: ``align_dataset_list`` and ``iterblocks``
+>
+> ~~~
+> aligned_lulc = os.path.join(out_dir, 'aligned_lulc.tif')
+> aligned_dem = os.path.join(out_dir, 'aligned_dem.tif')
+> pygeoprocessing.align_dataset_list(
+>     datset_uri_list=['/data/landcover.tif', dem_path],
+>     dataset_out_uri_list=[aligned_lulc, aligned_dem],
+>     resample_method_list=['nearest', 'nearest'],
+>     out_pixel_size=pygeoprocessing.get_cell_size_from_uri(dem_path),
+>     mode='intersection',
+>     dataset_to_align_index=0)
+> 
+> pixel_sum = 0.
+> pixel_count = 0.
+> for (lulc_data, lulc_block), (dem_data, dem_block) in itertools.izip(
+>         pygeoprocessing.iterblocks(aligned_lulc),
+>         pygeoprocessing.iterblocks(aligned_dem)):
+>     matching_dem_cells = dem_block[lulc_data == 1]
+>     pixel_sum += matching_dem_cells.sum()
+>     pixel_count += len(matching_dem_cells)
+> print pixel_sum / pixel_count
+> ~~~
+> {: .python}
+{: .challenge}
 

@@ -47,9 +47,6 @@ stats = pygeoprocessing.aggregate_raster_values_uri(
     raster_uri=dem,
     shapefile_uri=yosemite_vector)
 
-print stats.total
-print stats.pixel_mean
-print stats.hectare_mean
-print stats.n_pixels
-print stats.pixel_min
-print stats.pixel_max
+# Print the mean hight across the park
+# 9999 is used as a Feature ID when we aggregate across the whole vector
+print stats.pixel_mean[9999]
