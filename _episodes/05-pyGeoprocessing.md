@@ -259,85 +259,65 @@ pygeoprocessing.vectorize_datasets(
 ![High elevation, steep grasslands](high_elev_steep_grasslands.png)
 
 
-### Local Operations: ``pygeoprocessing.vectorize_datasets``
+## Raster Analysis: Percentage of Yosemite above 3500m
 
-Local operations create a single output layer that is a function of various input layers.
-Most GIS tools provide a Raster Calculator that does something similar.
-
-To be able to use ``vectorize_datasets`` effectively, we need to first be able to define our
-problem in terms of block-level operations.
-
-A trivial example would be to add pixels together.
-
-In PyGeoProcessing, ``pygeoprocessing.vectorize_datasets`` allows us to do this with all
-of the flexibility of the python programming language.
-
-### Focal Operations:  ``pygeoprocessing.raster_focal_op``
-
-* Focal operations are technicallly the class,
-    * pygeoprocessing only has convolutions at the moment
-    * true focal operations could be defined via iterblocks, or by looping over each pixel and indexing accordingly
-
-Demonstrate a gaussian filter.
-
-
-### Zonal Statistics: ``pygeoprocessing.aggregate_values``
-
-* example: find the median elevation of all DEM pixels under the yosemite polygon.
-
-### Routing: ``pygeoprocessing.routing``
-
-Possibilities:
-* Calculate slope for yosemite area.
-* Calculate the stream network layer
-
-Delineate a watershed.
-
-### Block iteration: ``pygeoprocessing.iterblocks``
-
-Block iteration allows us to:
-
-* Incrementally read in reasonable amounts of raster data and perform matrix operations on it
-* Keep track of a block's location in the context of the raster.
-
-#### Note on execution speed
+Useful for: analyzing pixels inside of a raster or set of overlapping rasters.
 
 ~~~
+import os
+
 from osgeo import gdal
-import time
-def timeit():
-    start_time = time.time()
-    ds = gdal.Open('data/landcover.tif')
-    array = ds.GetRasterBand(1).ReadAsArray()
-    print array.sum()
-    print 'Took %s' % time.time() - start_time
+import pygeoprocessing
 
-timeit()
+OUTPUT_DIR = '/shared/high_elevation_area'
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
+
+# We'll use the DEM from the tutorial above.
+dem = '/shared/grasslands_demo/joined_dem.tif'
 ~~~
+{: .python}
 
-In this case, we have a raster that should fit into the system's main memory, so 
-this operation should be pretty quick.
+``pygeoprocessing.iterblocks`` is a generator that on each iteration provides:
+
+* A dict of contextual information (where the block is located within the raster)
+* A numpy array of the block that was just loaded
+
+~~~
+num_park_pixels = 0.
+num_3500_pixels = 0.
+for dem_info, dem_block in pygeoprocessing.iterblocks(dem):
+
+    num_park_pixels += len(dem_block[dem_block != -1])
+    num_3500_pixels += len(dem_block[(dem_block != -1) & (dem_block >= 3500)])
+
+print 'Percentage of park land above 3500m: %s%%' % round(
+    (num_3500_pixels / num_park_pixels) * 100, 2)
+~~~
+{: .python}
 
 
-* Locate all grasslands within 200m of streams above 2000m elevation.
-    * Inputs to vectorize_datasets:
-        * Mosaiced DEMs in the same projection (EPSG:32611), clipped to yosemite AOI
-        * Stream layer generated from DEM with known threshold.
-        * EDT generated from stream layer
-    * Function required:
-        * Mask out areas of nodata
-        * If lulc is grassland and EDT < 200 and DEM >= 2000, 1 else 0 
-    * Output type = Int16, nodata=-1
+### Zonal Statistics
+
+``pygeoprocessing.aggregate_raster_values_uri`` allows us to collect statistics about
+pixel values located underneath a vector.  If there are mulitple polygons in the vector,
+stats will be aggregated for each polygon.
+
+~~~
+# Compare with aggregate_raster_values_uri
+yosemite_vector = '/data/yosemite.shp'
+stats = pygeoprocessing.aggregate_raster_values_uri(
+    raster_uri=dem,
+    shapefile_uri=yosemite_vector)
+
+print stats.total
+print stats.pixel_mean
+print stats.hectare_mean
+print stats.n_pixels
+print stats.pixel_min
+print stats.pixel_max
+~~~
+{: .python}
 
 
-* work through a vectorize_datasets workflow:
-    * Read in a CSV table
-    * Reclassify the LULC
-    * Take the DEMs, unproject them, join the two together, reproject them.
-    * Route the DEM, figure out the stream network.
-    * Use vectorize_datasets to locate perform some equation on the layers.
-
-* work through another workflow:
-    * use iterblocks to find the number of pixels that meet some criteria in the whole raster.
-    * time it!  Compare with reading a whole array into memory, and/or with a numpy.memmap array.
 
