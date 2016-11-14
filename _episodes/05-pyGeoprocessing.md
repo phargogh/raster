@@ -1,7 +1,7 @@
 ---
 title: "Efficient raster computation with PyGeoProcessing"
-teaching: 20 
-exercises: 15 
+teaching: 30 
+exercises: 15
 questions:
 - "What problems can PyGeoProcessing address?"
 - "When should I use PyGeoProcessing?"
