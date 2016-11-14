@@ -63,9 +63,20 @@ keypoints:
         * extracting key raster metadata
         * Creating new raster datasets
 
-### What PyGeoProcessing can do for you
+> ## API Updates in Progress
+> 
+> We're actively working to improve pygeoprocessing, so the API examples you see here
+> may change in the near future.
+>
+> API documentation can be found here: 
+> [https://pythonhosted.org/pygeoprocessing/](https://pythonhosted.org/pygeoprocessing/)
+{: .callout}
 
-#### When it makes sense to use PyGeoProcessing
+
+
+# What PyGeoProcessing can do for you
+
+## When it makes sense to use PyGeoProcessing
 * You need a reproducible workflow for your analysis
 * Your analysis needs to be run many times (such as in optimization routines)
 * Your data is accessible on a single computer ("*large* but not *big*")
@@ -73,19 +84,19 @@ keypoints:
 * Your program needs to be able to work with inputs that could be inconveniently large (won't fit into active memory)
 
 
-#### Why not just use GIS software?
+## Why not just use GIS software?
 * Most GIS installations are very large, and may break your script with each upgrade (ArcGIS is notorious for this)
 * GIS don't always provide pure-python interfaces, or can't execute scripts from the command-line
 * You can't ``pip install`` your GIS software
 
 
-#### Why not just use ``numpy`` directly on extracted matrices?
+## Why not just use ``numpy`` directly on extracted matrices?
 If you can, go for it!  PyGeoProcessing is best for cases where your data are large
 enough that you cannot fit it all into main memory, for efficiently automating
 complex workflows, and for common nontrivial operations.
 It won't be relevent for every use case.
 
-###### Overhead of looping in python
+### Overhead of looping in python
 Some operations that require a lot of looping, though, are especially challenging to
 do in python.  In a python loop, every iteration needs to be able to handle all of the
 possible types that a value might be.  For every line of python, at least 20 lines of C++
@@ -106,7 +117,7 @@ Compare it with the [C code that must be executed](loop-overhead.html) to do
 something this simple.  For this reason, you may need to compile your focal
 operations to get them to run fast.
 
-##### Swapping Active Memory is Expensive
+### Swapping Active Memory is Expensive
 
 When arrays can't fit into active memory (but can stil be addressed), the Operating
 System is left to swap chunks of memory to disk to make room for the parts of
@@ -114,6 +125,8 @@ active memory that are needed **right now**.  The chunks can then be loaded back
 into memory again later when they are needed.  This is convenient, but expensive,
 since the OS can't predict what it will need next and has to wait until its needed.
 For many analyses, this isn't an issue.
+
+# Workflow Examples
 
 ## Single-output workflow: Steep, High-Elevation Grasslands in Yosemite
 
@@ -297,7 +310,7 @@ print 'Percentage of park land above 3500m: %s%%' % round(
 {: .python}
 
 
-### Zonal Statistics
+## Zonal Statistics
 
 ``pygeoprocessing.aggregate_raster_values_uri`` allows us to collect statistics about
 pixel values located underneath a vector.  If there are mulitple polygons in the vector,
@@ -318,6 +331,8 @@ print stats.pixel_min
 print stats.pixel_max
 ~~~
 {: .python}
+
+
 
 
 
