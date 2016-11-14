@@ -7,13 +7,16 @@ questions:
 - "What raster dataset formats are supported?"
 - "How do I interact with raster data within a python program?"
 objectives:
-- "Understand the basic components of a raster dataset"
+- "Understand the basic components of a raster dataset and how to access them
+with GDAL"
 - "Read from and write to raster datasets"
 - "Perform numpy operations on a raster's values"
 keypoints:
-- "GDAL is useful for reading/writing/transforming raster datasets"
+- "GDAL is extremely useful for reading/writing/transforming raster datasets"
+- "GDAL usually ships with useful command-line utilities"
 - "Errors can be handled pythonically"
 - "Pixel values can be extracted to a numpy array"
+- "Raster attributes can usually be read without reading pixel values"
 ---
 
 # What is GDAL (Geospatial Data Abstraction Library)?
