@@ -349,7 +349,7 @@ pygeoprocessing.align_dataset_list(
 )
 ~~~
 
-> ## Exercise 1: What's the mean elevation of evergreen forest in Yosemite?
+> ## Exercise: What's the mean elevation of evergreen forest in Yosemite?
 > 
 > There are several ways to do this.  The key is getting the LULC and the
 > DEM rasters to the same shape and resolution.

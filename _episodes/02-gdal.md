@@ -437,18 +437,34 @@ ds = None
 
 ### Other libraries that make use of GDAL:
 
-Show some examples of what might be different about these libraries.
+Two libraries in particular extend GDAL to provide a more pythonic interface.
+* [rasterio](https://pypi.python.org/pypi/rasterio)
+    * Developed by Mapbox, this compiles against GDAL but does not require it
+    in the same way that the SWIG bindings do.
+    * This library focuses on providing pythonic design patterns, and tries to
+    eliminate the python gotchas found in the GDAL SWIG bindings.
+    * Not all raster file formats supported by GDAL are supported by rasterio.
+    * Supports python versions 2 and 3.
 
-* rasterio
-* greenwich
-* GeoDjango (via postGIS)
+* [greenwich](https://pypi.python.org/pypi/greenwich)
+    * This is a third-party library that extends the GDAL SWIG bindings
+    * Greenwich objects still allow access to the underlying GDAL objects that
+    we reviewed in this section
+    * Attributes of a raster are accessed in the ways that python developers
+    are accustomed to.
+    * Supports python 2 only.
 
-Exercises:
- - Create a trivial raster from scratch with small dimensions
- - Reproject a DEM into a new CRS 
- - Virtual Raster formats - why they can be awesome.
- - Create a raster on disk with 3 bands, each with a different value.
- - Do something interesting with the geotransform and pixel sizes ... compute overlap?
+For building geospatial web applications based on Django, be sure to check out GeoDjango:
+* [GeoDjango (via postGIS)](https://docs.djangoproject.com/en/1.10/ref/contrib/gis/)
 
-Things to elaborate on:
- - Virtual filesystems vs. Virtual rasters (VRT)
+
+> ## How many square meters does ``/data/landcover.tif`` cover?
+>
+> ~~~
+> lulc_ds = gdal.Open('/data/landcover.tif')
+> geotransform = lulc_ds.GetGeoTransform()
+> coverage_in_m = (lulc_ds.RasterXSize * math.abs(geotransform[1]) +
+>   lulc_ds.RasterYSize *  math.abs(geotransform[5]))
+> ~~~
+> {: .python}
+{: .challenge}
