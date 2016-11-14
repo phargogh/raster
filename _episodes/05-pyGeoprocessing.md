@@ -108,8 +108,12 @@ operations to get them to run fast.
 
 ##### Swapping Active Memory is Expensive
 
-Note about numpy.memmap.
-
+When arrays can't fit into active memory (but can stil be addressed), the Operating
+System is left to swap chunks of memory to disk to make room for the parts of
+active memory that are needed **right now**.  The chunks can then be loaded back 
+into memory again later when they are needed.  This is convenient, but expensive,
+since the OS can't predict what it will need next and has to wait until its needed.
+For many analyses, this isn't an issue.
 
 ## Single-output workflow: Steep, High-Elevation Grasslands in Yosemite
 
@@ -155,13 +159,17 @@ yosemite_vector = '/data/yosemite.shp'
 
 
 ### Joining our two DEMs
-|-----------------------|-----------------------|
-| ``/data/N38W120.tif`` | ``/data/N37W120.tif`` |
-|-----------------------|-----------------------|
-| ![DEM 1](N38W120.png) | ![DEM 1](N37W120.png) |
-|-----------------------|-----------------------|
-| ASTER GDEM is a product of METI and NASA.     |
-|-----------------------------------------------|
+
+|----------------------------------|----------------------------------|
+| ``/data/N38W120.tif``            | ``/data/N37W120.tif``            |
+|----------------------------------|----------------------------------|
+| ![DEM 1](../02-gdal/N38W120.png) | ![DEM 1](../02-gdal/N37W120.png) |
+|----------------------------------|----------------------------------|
+| ASTER GDEM is a product of METI and NASA.                           |
+|---------------------------------------------------------------------|
+
+Since both DEMs are projected already, we need to be a little more careful
+about putting them together.
 
 ~~~
 LOGGER.info('Merging DEMs')
@@ -190,8 +198,8 @@ pygeoprocessing.vectorize_datasets(
 ~~~
 {:.python}
 
-NEED AN IMAGE OF THIS
 
+![DEMs, clipped to yosemite outline](joined_dem.png)
 
 ### Calculate Slope
 
@@ -204,7 +212,7 @@ pygeoprocessing.calculate_slope(
 ~~~
 {:.python}
 
-NEED AN IMAGE OF THIS
+![Visualization of slope of yosemite](slope.png)
 
 ### Locate Steep, High-Elevation Grasslands
 
@@ -243,13 +251,12 @@ pygeoprocessing.vectorize_datasets(
     # We could calculate projected units by hand, but this is more convenient.
     pixel_size_out=pygeoprocessing.get_cell_size_from_uri(joined_dem),
     bounding_box_mode='intersection',
-    vectorize_op=False,  # we
+    vectorize_op=False,  # this will soon be required.
     aoi_uri=yosemite_vector)
 ~~~
 {:.python}
 
-NEED AN IMAGE OF THIS
-
+![High elevation, steep grasslands](high_elev_steep_grasslands.png)
 
 
 ### Local Operations: ``pygeoprocessing.vectorize_datasets``
