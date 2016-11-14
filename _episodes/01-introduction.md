@@ -4,16 +4,17 @@ teaching: 15
 exercises: 0
 
 questions:
-- "What are the characteristics of a Raster?"
-- "How can raster data be accessed through python?"
+- "What is a raster?"
+- "What sorts of information does a raster typically model?"
+- "What are the major charateristics of a raster dataset?"
+- "What assumptions does the format imply?"
 
 objectives:
-- explore how to handle these types of datasets with python
-- understand the basic characteristics of raster datasets
+- Understand the raster data model
 
 keypoints:
-- gridded data that vary in space and time are common in many geospatial applcations (e.g. climatology)
-- new tools are needed that can accommodate the complexity and size of modern multidimensional datasets
+- Gridded data that vary in space and time are common in many geospatial applcations
+- Specialized tools are needed to accommodate the complexity and size of many raster datasets
 - GIS tools (e.g. QGIS, SAGA GIS) are usually needed to visualize these datasets
 
 ---
@@ -23,6 +24,7 @@ Scientists working with spatial data often need to manipulate datasets structure
 
 # Common types of Geospatial data
 
+* Raw multispectral datasets from data providers such as NASA, USGS and the like
 * Classified Land-use / Land-cover datasets
 * Digital Elevation Models
 * Digital Orthoimages
